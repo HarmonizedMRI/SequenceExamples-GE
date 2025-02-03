@@ -22,7 +22,7 @@ seq = mr.Sequence(sys);
 fov = 240e-3; Nx = 200; Ny = 200;   % FOV and resolution
 sliceThickness = 3e-3;              % slice thickness (m)
 alpha = 6;                          % flip angle (degrees)
-TR = 12e-3;                         % repetition time TR (s)
+TR = 100e-3;                         % repetition time TR (s)
 TE = 5e-3;                          % echo time TE (s) 
 dwell = 10e-6;                      % ADC sample time (s)
 rfSpoilingInc = 117;                % RF spoiling increment
@@ -68,7 +68,7 @@ gz.delay = gz.delay + extraDelay;
 % -10 < iY <= 0    ADC is turned on and used for receive gain calibration on GE
 % iY > 0           Image acquisition
 
-nDummyShots = 100;
+nDummyShots = 20;
 pislquant = 10;    % number of shots/ADC events used for receive gain calibration
 
 rf_phase = 0;
