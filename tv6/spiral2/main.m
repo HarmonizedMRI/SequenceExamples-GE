@@ -2,7 +2,7 @@
 createSequenceFile = true;
 reconstruct = false;
 
-version = 'tv6'; 
+version = 'pge2'; 
 
 if createSequenceFile
     % write spiral.seq
@@ -24,7 +24,20 @@ if createSequenceFile
             'rfRingdownTime', 0, ...             % us
             'adcDeadTime', 0);                   % us
 
+        % Convert the .seq file/object to the PulCeq representation
+        %ceq = seq2ceq('spiral.seq');
+        %ceq2ge(ceq, sysGE, 'spiral.tar', 'seqGradRasterTime', sys.gradRasterTime);
+
         seq2ge('spiral.seq', sysGE, 'spiral.tar');
+    end
+
+    if strcmp(version, 'pge2')
+        %system('git clone --branch v2.1.2 git@github.com:HarmonizedMRI/PulCeq.git');
+        addpath ~/github/HarmonizedMRI/PulCeq/matlab
+        addpath PulCeq/matlab
+        ceq = seq2ceq('spiral.seq');
+        pislquant = 1;   % number of ADC events used for receive gain calibration
+        writeceq(ceq, 'spiral.pge', 'pislquant', pislquant);
     end
 end
 
