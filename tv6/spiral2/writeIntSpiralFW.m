@@ -73,7 +73,7 @@ for iint=1:Nint
     rf.freqOffset = 0; %gz.amplitude*sliceThickness*(s-1-(Nslices-1)/2);
 
     % seq.addBlock(rf_fs,gz_fs, mr.makeLabel('SET', 'TRID', 1)); % fat-sat      % adding the TRID label needed by the GE interpreter
-    seq.addBlock(rf, gz,mr.makeLabel('SET', 'TRID', iint));
+    seq.addBlock(rf, gz,mr.makeLabel('SET', 'TRID', 1));
     seq.addBlock(gzReph);
     irot=(iint-1)*2*pi/Nint;
     igx=+cos(irot)*gradSpiral(1,:)+sin(irot)*gradSpiral(2,:);

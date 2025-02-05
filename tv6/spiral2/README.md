@@ -5,6 +5,8 @@ WIP, February 2025
 This example is for testing gradient rotation detection with seq2ceq.m 
 
 This example is interleaved 2D spiral.  
+The main thing to note is that the TRID
+is reused independently of rotation angle.
 
 To be tested on the following system(s):
 * GE MR750
