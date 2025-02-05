@@ -5,7 +5,7 @@
 
 dtDelay=1e-3;  % extra delay
 fov=200e-3; mtx=128; Nx=mtx; Ny=mtx;        % Define FOV and resolution
-Nint=6;
+Nint=8;
 Gmax=0.030;  % T/m
 Smax=120; % T/m/s
 sliceThickness=3e-3;             % slice thickness
