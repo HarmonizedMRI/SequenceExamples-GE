@@ -32,9 +32,9 @@ if createSequenceFile
     end
 
     if strcmp(version, 'pge2')
-        %system('git clone --branch v2.1.2 git@github.com:HarmonizedMRI/PulCeq.git');
-        addpath ~/github/HarmonizedMRI/PulCeq/matlab
+        system('git clone --branch v2.2.0 git@github.com:HarmonizedMRI/PulCeq.git');
         addpath PulCeq/matlab
+        %addpath ~/github/HarmonizedMRI/PulCeq/matlab
         ceq = seq2ceq('spiral.seq');
         pislquant = 1;   % number of ADC events used for receive gain calibration
         writeceq(ceq, 'spiral.pge', 'pislquant', pislquant);
