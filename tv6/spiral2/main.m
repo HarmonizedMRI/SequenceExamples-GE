@@ -32,7 +32,7 @@ if createSequenceFile
     end
 
     if strcmp(version, 'pge2')
-        system('git clone --branch v2.2.0 git@github.com:HarmonizedMRI/PulCeq.git');
+        system('git clone --branch v2.2.2 git@github.com:HarmonizedMRI/PulCeq.git');
         addpath PulCeq/matlab
         %addpath ~/github/HarmonizedMRI/PulCeq/matlab
         ceq = seq2ceq('spiral.seq');
