@@ -48,6 +48,7 @@ dt=1/(2*BW);        % [s]
 [k,g,s,time,r,theta]=vds(Smax*1e2,Gmax*1e2,dt,Nint,[fov*1e2,0],1/(2*res*1e2));
 nRaiseTime=ceil(Gmax/Smax/sys.gradRasterTime);
 gSpiral=[g,linspace(g(end),0,nRaiseTime)]/1e2*sys.gamma;
+[kx, ky] = toppe.utils.g2k(1e2/sys.gamma*[real(gSpiral(:)) imag(gSpiral(:))], Nint);
 figure, plot(real(gSpiral)); hold on, plot(imag(gSpiral));
 clear gradSpiral;
 gradSpiral(1,:)=real(gSpiral);
