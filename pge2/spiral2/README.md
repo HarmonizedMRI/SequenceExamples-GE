@@ -1,8 +1,8 @@
 # Spiral sequence for Pulseq on GE 
 
-WIP, February 2025
+Code for sequence generation and recon provided by Florian Wiesinger, GE
 
-Need to add recon
+WIP, February 2025
 
 This example is for testing gradient rotation detection with seq2ceq.m 
 
@@ -10,7 +10,7 @@ This example is interleaved 2D spiral.
 The main thing to note is that the TRID
 is reused independently of rotation angle.
 
-To be tested on the following system(s):
+Tested by jfnielsen@gmail.com on the following system(s):
 * GE MR750
 * SW version MR30.1\_R01
 * Pulseq interpreter pge2 version: https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.3.0

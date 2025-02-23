@@ -30,7 +30,7 @@ Kx0=cumsum(gradSpiral(1,1:nDATA));
 Ky0=cumsum(gradSpiral(2,1:nDATA));
 Kx=[]; Ky=[];
 for iint=1:Nint
-    phi=-2*pi*(iint-1)/Nint;   % changed sign to match pge2 rotation (JFN)
+    phi=-2*pi*(iint-1)/(Nint+0.1);   % changed sign to match pge2 rotation (JFN)
     Kx=[Kx,+Kx0*cos(phi)+Ky0*sin(phi)];
     Ky=[Ky,-Kx0*sin(phi)+Ky0*cos(phi)];
 end

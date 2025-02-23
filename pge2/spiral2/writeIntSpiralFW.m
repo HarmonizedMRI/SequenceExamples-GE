@@ -76,7 +76,7 @@ for iint=1:Nint
     % seq.addBlock(rf_fs,gz_fs, mr.makeLabel('SET', 'TRID', 1)); % fat-sat      % adding the TRID label needed by the GE interpreter
     seq.addBlock(rf, gz,mr.makeLabel('SET', 'TRID', 1));
     seq.addBlock(gzReph);
-    irot=(iint-1)*2*pi/Nint;
+    irot=(iint-1)*2*pi/(Nint+0.1);  % make rotations not exactly on axis so rotation detection in seq2ceq.m works
     igx=+cos(irot)*gradSpiral(1,:)+sin(irot)*gradSpiral(2,:);
     igy=-sin(irot)*gradSpiral(1,:)+cos(irot)*gradSpiral(2,:);
     % figure(100); plot(igx,'-k'); hold on, plot(igy,'-b');
