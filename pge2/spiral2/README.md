@@ -2,23 +2,22 @@
 
 Code for sequence generation and recon provided by Florian Wiesinger, GE
 
-WIP, February 2025
-
 This example is for testing gradient rotation detection with seq2ceq.m 
 
 This example is interleaved 2D spiral.  
-The main thing to note is that the TRID
-is reused independently of rotation angle.
+The main thing to note is that **the same TRID is reused independently of rotation angle**.
 
 Tested by jfnielsen@gmail.com on the following system(s):
 * GE MR750
 * SW version MR30.1\_R01
 * Pulseq interpreter pge2 version: https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.3.0
-* PulCeq version: https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.2.0
+* PulCeq version: https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.2.3
 
 To download the required MATLAB packages,
 create the pge sequence file, and reconstruct the data, see `main.m` in this folder.
 
+Example reconstruction result with PinvRecon\_IntSpiral:  
+![Example image](1.png)
 
 ## Motivation
 
