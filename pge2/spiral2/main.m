@@ -4,7 +4,7 @@ reconstruct = 0;
 
 if createSequenceFile
     % write spiral.seq
-    system('git clone git@github.com:pulseq/pulseq.git');
+    system('git clone --branch 1.5.0 git@github.com:pulseq/pulseq.git');
     addpath pulseq/matlab
     writeIntSpiralFW;   
 
