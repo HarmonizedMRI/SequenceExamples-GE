@@ -36,6 +36,7 @@ warning('OFF', 'mr:restoreShape'); % restore shape is not compatible with spiral
 
 % Create 90 degree slice selection pulse and gradient
 [rf, gz] = mr.makeSincPulse(pi/2,'system',sys,'Duration',3e-3,...
+    'use', 'excitation', ...
     'SliceThickness',sliceThickness,'apodization',0.5,'timeBwProduct',4,'system',sys);
 gzReph = mr.makeTrapezoid('z',sys,'Area',-gz.area/2,'system',sys);
 
@@ -81,8 +82,8 @@ for iint=1:Nint
     igy=-sin(irot)*gradSpiral(1,:)+cos(irot)*gradSpiral(2,:);
     % figure(100); plot(igx,'-k'); hold on, plot(igy,'-b');
     figure(101); plot(cumsum(igx),cumsum(igy)); hold on,
-    gx=mr.makeArbitraryGrad('x',0.99*igx,'Delay',dtDelay,'system',sys);
-    gy=mr.makeArbitraryGrad('y',0.99*igy,'Delay',dtDelay,'system',sys);
+    gx=mr.makeArbitraryGrad('x',0.99*igx,'Delay',dtDelay,'system',sys, 'first', 0, 'last', 0);
+    gy=mr.makeArbitraryGrad('y',0.99*igy,'Delay',dtDelay,'system',sys, 'first', 0, 'last', 0);
     seq.addBlock(gx,gy,adc);
 
     % Spoil, and extend TR to allow T1 relaxation
