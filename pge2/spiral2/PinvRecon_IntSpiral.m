@@ -30,7 +30,7 @@ Kx0=cumsum(gradSpiral(1,1:nDATA));
 Ky0=cumsum(gradSpiral(2,1:nDATA));
 Kx=[]; Ky=[];
 for iint=1:Nint
-    phi=2*pi*(iint-1)/Nint;
+    phi=-2*pi*(iint-1)/Nint;    % negative sign to match orientation in pge2
     Kx=[Kx,+Kx0*cos(phi)+Ky0*sin(phi)];
     Ky=[Ky,-Kx0*sin(phi)+Ky0*cos(phi)];
 end
