@@ -5,10 +5,11 @@
 
 dtDelay=1e-3;  % extra delay
 fov=200e-3; mtx=128; Nx=mtx; Ny=mtx;        % Define FOV and resolution
-Nint=8;
+Nint=4;
+Nprj=16;
 Gmax=0.030;  % T/m
 Smax=120; % T/m/s
-sliceThickness=3e-3;             % slice thickness
+sliceThickness=fov;             % slice thickness
 Nslices=1;
 rfSpoilingInc = 117;                % RF spoiling increment
 Oversampling=2; % by looking at the periphery of the spiral I would say it needs to be at least 2
@@ -65,38 +66,46 @@ gz_spoil=mr.makeTrapezoid('z',sys,'Area',deltak*Nx*4,'system',sys);
 
 rf_phase = 0; rf_inc = 0;
 % Define sequence blocks
-for iint=1:Nint
+for iprj=1:Nprj
+    for iint=1:Nint
 
-    % RF spoiling
-    % rf.phaseOffset = rf_phase/180*pi;
-    % adc.phaseOffset = rf_phase/180*pi;
-    % rf_inc = mod(rf_inc+rfSpoilingInc, 360.0);
-    % rf_phase = mod(rf_phase+rf_inc, 360.0);
-    rf.freqOffset = 0; %gz.amplitude*sliceThickness*(s-1-(Nslices-1)/2);
+        % RF spoiling
+        % rf.phaseOffset = rf_phase/180*pi;
+        % adc.phaseOffset = rf_phase/180*pi;
+        % rf_inc = mod(rf_inc+rfSpoilingInc, 360.0);
+        % rf_phase = mod(rf_phase+rf_inc, 360.0);
+        rf.freqOffset = 0; %gz.amplitude*sliceThickness*(s-1-(Nslices-1)/2);
 
-    % seq.addBlock(rf_fs,gz_fs, mr.makeLabel('SET', 'TRID', 1)); % fat-sat      % adding the TRID label needed by the GE interpreter
-    seq.addBlock(rf, gz,mr.makeLabel('SET', 'TRID', 1));
-    seq.addBlock(gzReph);
+        % seq.addBlock(rf_fs,gz_fs, mr.makeLabel('SET', 'TRID', 1)); % fat-sat      % adding the TRID label needed by the GE interpreter
+        seq.addBlock(rf, gz,mr.makeLabel('SET', 'TRID', 1));
+        seq.addBlock(gzReph);
 
-    % rotate by 3D golden angles
-    % ref: Generalization of three-dimensional golden-angle radial acquisition
-    % to reduce eddy current artifacts in bSSFP CMR imaging (A, Fyrdahl et. al)
-    phi1 = 0.4656; phi2 = 0.6823;
-    alpha = acos(mod(iint * phi1, 1)); % polar angle
-    beta = 2*pi*(iint * phi2); % azimuthal angle
-    R = eul2rotm([beta,0,alpha],"ZYX");
-    iG = R*padarray(gradSpiral,[1,0],0,'post');
+        % interleave rotation: rotate by golden angle about z
+        r_int = iint*pi*(3 - sqrt(5));
+        R_int = eul2rotm([r_int,0,0],'ZYX');
 
-    % figure(100); plot(igx,'-k'); hold on, plot(igy,'-b');
-    figure(101); plot3(cumsum(iG(1,:)),cumsum(iG(2,:)),cumsum(iG(3,:))); hold on,
-    gx_sp=mr.makeArbitraryGrad('x',0.99*iG(1,:),'Delay',dtDelay,'system',sys,'first',0,'last',0);
-    gy_sp=mr.makeArbitraryGrad('y',0.99*iG(2,:),'Delay',dtDelay,'system',sys,'first',0,'last',0);
-    gz_sp=mr.makeArbitraryGrad('z',0.99*iG(3,:),'Delay',dtDelay,'system',sys,'first',0,'last',0);
-    seq.addBlock(gx_sp,gy_sp,gz_sp,adc);
+        % projection rotation: rotate by 3D golden angles
+        % ref: Generalization of three-dimensional golden-angle radial acquisition
+        % to reduce eddy current artifacts in bSSFP CMR imaging (A, Fyrdahl et. al)
+        phi1 = 0.4656; phi2 = 0.6823; % 3D golden ratios
+        rp_prj = acos(mod(iprj * phi1, 2)-1); % polar angle
+        ra_prj = 2*pi*(iprj * phi2); % azimuthal angle
+        R_prj = eul2rotm([rp_prj,0,ra_prj],'ZYX');
 
-    % Spoil, and extend TR to allow T1 relaxation
-    % Avoid pure delay block here so that the gradient heating check on interpreter is accurate
-    seq.addBlock(gz_spoil, mr.makeDelay(2)); 
+        % rotate the gradients
+        iG = R_prj*R_int*padarray(gradSpiral,[1,0],0,'post');
+
+        % figure(100); plot(igx,'-k'); hold on, plot(igy,'-b');
+        figure(101); plot3(cumsum(iG(1,:)),cumsum(iG(2,:)),cumsum(iG(3,:))); hold on,
+        gx_sp=mr.makeArbitraryGrad('x',0.99*iG(1,:),'Delay',dtDelay,'system',sys,'first',0,'last',0);
+        gy_sp=mr.makeArbitraryGrad('y',0.99*iG(2,:),'Delay',dtDelay,'system',sys,'first',0,'last',0);
+        gz_sp=mr.makeArbitraryGrad('z',0.99*iG(3,:),'Delay',dtDelay,'system',sys,'first',0,'last',0);
+        seq.addBlock(gx_sp,gy_sp,gz_sp,adc);
+
+        % Spoil, and extend TR to allow T1 relaxation
+        % Avoid pure delay block here so that the gradient heating check on interpreter is accurate
+        seq.addBlock(gz_spoil, mr.makeDelay(2));
+    end
 end
 
 % check whether the timing of the sequence is correct
