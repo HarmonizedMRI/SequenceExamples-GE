@@ -5,7 +5,7 @@
 
 dtDelay=1e-3;  % extra delay
 fov=200e-3; mtx=128; Nx=mtx; Ny=mtx;        % Define FOV and resolution
-Nint=4;
+Nint=1;
 Nprj=16;
 Gmax=0.030;  % T/m
 Smax=120; % T/m/s
@@ -104,7 +104,7 @@ for iprj=1:Nprj
 
         % Spoil, and extend TR to allow T1 relaxation
         % Avoid pure delay block here so that the gradient heating check on interpreter is accurate
-        seq.addBlock(gz_spoil, mr.makeDelay(2));
+        seq.addBlock(gz_spoil, mr.makeDelay(20e-3));
     end
 end
 
@@ -121,10 +121,10 @@ end
 
 %
 seq.setDefinition('FOV', [fov fov sliceThickness]);
-seq.setDefinition('Name', 'spiral');
+seq.setDefinition('Name', 'spi3d');
 % seq.setDefinition('MaxAdcSegmentLength', adcSamplesPerSegment); % this is important for making the sequence run automatically on siemens scanners without further parameter tweaking
 
-seq.write('spiral.seq');   % Output sequence for scanner
+seq.write('spi3d.seq');   % Output sequence for scanner
 
 % the sequence is ready, so let's see what we got 
 seq.plot();             % Plot sequence waveforms
