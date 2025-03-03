@@ -66,6 +66,7 @@ adc=mr.makeAdc(nADC,'Duration',tADC,'Delay',dtDelay,'system',sys);
 gz_spoil=mr.makeTrapezoid('z',sys,'Area',deltak*Nx*4,'system',sys);
 
 rf_phase = 0; rf_inc = 0;
+
 % Define sequence blocks
 for iprj=1:Nprj
     for iint=1:Nint
@@ -89,7 +90,7 @@ for iprj=1:Nprj
         % ref: Generalization of three-dimensional golden-angle radial acquisition
         % to reduce eddy current artifacts in bSSFP CMR imaging (A, Fyrdahl et. al)
         phi1 = 0.4656; phi2 = 0.6823; % 3D golden ratios
-        rp_prj = acos(mod((iprj-1) * phi1, 2)-1); % polar angle
+        rp_prj = acos(mod((iprj-1) * phi1, 2)-1) + pi; % polar angle
         ra_prj = 2*pi*((iprj-1) * phi2); % azimuthal angle
         R_prj = eul2rotm([rp_prj,0,ra_prj],'ZYX');
 
