@@ -55,6 +55,7 @@ figure, plot(real(gSpiral)); hold on, plot(imag(gSpiral));
 clear gradSpiral;
 gradSpiral(1,:)=real(gSpiral);
 gradSpiral(2,:)=imag(gSpiral);
+G0 = padarray(gradSpiral,[1,0],0,'post');
 nSpiral=size(gradSpiral,2);
 
 nADC=floor(sys.gradRasterTime/sys.adcRasterTime*nSpiral/sys.adcSamplesDivisor)*sys.adcSamplesDivisor;
@@ -81,19 +82,20 @@ for iprj=1:Nprj
         seq.addBlock(gzReph);
 
         % interleave rotation: rotate by golden angle about z
-        r_int = iint*pi*(3 - sqrt(5));
+        r_int = (iint-1)*pi*(3 - sqrt(5));
         R_int = eul2rotm([r_int,0,0],'ZYX');
 
         % projection rotation: rotate by 3D golden angles
         % ref: Generalization of three-dimensional golden-angle radial acquisition
         % to reduce eddy current artifacts in bSSFP CMR imaging (A, Fyrdahl et. al)
         phi1 = 0.4656; phi2 = 0.6823; % 3D golden ratios
-        rp_prj = acos(mod(iprj * phi1, 2)-1); % polar angle
-        ra_prj = 2*pi*(iprj * phi2); % azimuthal angle
+        rp_prj = acos(mod((iprj-1) * phi1, 2)-1); % polar angle
+        ra_prj = 2*pi*((iprj-1) * phi2); % azimuthal angle
         R_prj = eul2rotm([rp_prj,0,ra_prj],'ZYX');
 
         % rotate the gradients
-        iG = R_prj*R_int*padarray(gradSpiral,[1,0],0,'post');
+        R = R_prj * R_int;
+        iG = R * G0;
 
         % figure(100); plot(igx,'-k'); hold on, plot(igy,'-b');
         figure(101); plot3(cumsum(iG(1,:)),cumsum(iG(2,:)),cumsum(iG(3,:))); hold on,
