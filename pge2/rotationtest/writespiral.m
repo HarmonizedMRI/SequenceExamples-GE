@@ -55,9 +55,18 @@ clear gradSpiral;
 gradSpiral(1,:)=real(gSpiral);
 gradSpiral(2,:)=imag(gSpiral);
 G0 = padarray(gradSpiral,[1,0],0,'post');
-nSpiral=size(gradSpiral,2);
+nADC =size(gradSpiral,2);
 
-nADC=floor(sys.gradRasterTime/sys.adcRasterTime*nSpiral/sys.adcSamplesDivisor)*sys.adcSamplesDivisor;
+% trapezoid for testing
+g = linspace(0, 2, 200);  % G/cm
+g = [g 2*ones(1,1000) flipdim(g,2)]/1e2*sys.gamma;   % Hz/m
+nADC = length(g);
+clear G0
+G0(1,:) = g;
+G0(2,:) = 0*g;
+G0(3,:) = 0*g;
+
+nADC=floor(sys.gradRasterTime/sys.adcRasterTime*nADC/sys.adcSamplesDivisor)*sys.adcSamplesDivisor;
 tADC=sys.adcRasterTime*nADC;
 adc=mr.makeAdc(nADC,'Duration',tADC,'Delay',dtDelay,'system',sys);
 
@@ -71,11 +80,11 @@ rf.freqOffset = 0; %gz.amplitude*sliceThickness*(s-1-(Nslices-1)/2);
 for iint=1:Nint
 
     % excite
-    seq.addBlock(rf, gz,mr.makeLabel('SET', 'TRID', 1));
-    seq.addBlock(gzReph);
+    seq.addBlock(rf, mr.scaleGrad(gz, eps), mr.makeLabel('SET', 'TRID', 1));
+    seq.addBlock(mr.scaleGrad(gzReph, eps));
 
     % spiral gradients and readout
-    R = toppe.angleaxis2rotmat((iint-1)/Nint*2*pi, [1 1 1])
+    R = toppe.angleaxis2rotmat((iint-1)/Nint*2*pi, [0 0 1])
     Rdesign{iint} = R;
     iG = R * G0;
     % figure(100); plot(igx,'-k'); hold on, plot(igy,'-b');
@@ -87,13 +96,13 @@ for iint=1:Nint
 
     % Spoil, and extend TR to allow T1 relaxation
     % Avoid pure delay block here so that the gradient heating check on interpreter is accurate
-    seq.addBlock(gz_spoil, mr.makeDelay(0.010)); 
+    seq.addBlock(mr.scaleGrad(gz_spoil, eps), mr.makeDelay(0.005)); 
 
     % Play spiral again, but as unrotated shape in its own segment
-    seq.addBlock(gz,mr.makeLabel('SET', 'TRID', 1 + iint));
-    seq.addBlock(gzReph);
+    seq.addBlock(mr.scaleGrad(gz, eps), mr.makeLabel('SET', 'TRID', 1 + iint));
+    seq.addBlock(mr.scaleGrad(gzReph, eps));
     seq.addBlock(gx_sp, gy_sp, gz_sp);
-    seq.addBlock(gz_spoil, mr.makeDelay(0.010)); 
+    seq.addBlock(mr.scaleGrad(gz_spoil, eps), mr.makeDelay(0.005)); 
 end
 
 save Rdesign Rdesign
