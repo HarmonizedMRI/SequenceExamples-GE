@@ -64,13 +64,15 @@ adc=mr.makeAdc(nADC,'Duration',tADC,'Delay',dtDelay,'system',sys);
 
 % spoilers
 gz_spoil=mr.makeTrapezoid('z',sys,'Area',deltak*Nx*4,'system',sys);
-
 rf_phase = 0; rf_inc = 0;
+
+% init transformed kspace
+kspace = zeros(size(kx,1),3,Nint*Nprj);
+kspace0 = padarray([kx(:), ky(:)],[0,1],0,'post');
 
 % Define sequence blocks
 for iprj=1:Nprj
     for iint=1:Nint
-
         % RF spoiling
         % rf.phaseOffset = rf_phase/180*pi;
         % adc.phaseOffset = rf_phase/180*pi;
@@ -108,6 +110,9 @@ for iprj=1:Nprj
         % Spoil, and extend TR to allow T1 relaxation
         % Avoid pure delay block here so that the gradient heating check on interpreter is accurate
         seq.addBlock(gz_spoil, mr.makeDelay(20e-3));
+
+        % rotate kspace
+        kspace(:,:,(iprj-1)*Nint + iint) = kspace0 * R';
     end
 end
 
@@ -128,6 +133,7 @@ seq.setDefinition('Name', 'spi3d');
 % seq.setDefinition('MaxAdcSegmentLength', adcSamplesPerSegment); % this is important for making the sequence run automatically on siemens scanners without further parameter tweaking
 
 seq.write('spi3d.seq');   % Output sequence for scanner
+save kspace.mat kspace
 
 % the sequence is ready, so let's see what we got 
 seq.plot();             % Plot sequence waveforms
