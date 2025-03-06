@@ -56,8 +56,16 @@ for itr = 1:10 % 10 iterations
 end
 W = Gdiag(wi / sum(abs(wi)));
 
-%% solve for initial estimate (dc-NUFFT)
+% solve for initial estimate (dc-NUFFT)
 y = d(omega_msk);
 x0 = (W*A)' * y;
+x0 = ir_wls_init_scale(A, y, x0);
 
-im(reshape(x0,nx*ones(1,3)));
+% solve with CG
+x_hat = qpwls_pcg1(x0,A,1,y,0,'niter',20);
+
+% show results
+x0 = reshape(x0,nx*ones(1,3));
+x_hat = reshape(x_hat,nx*ones(1,3));
+figure, im(x0), title('initial estimate (dc-NUFFT)')
+figure, im(x_hat), title('CG Reconstruction')

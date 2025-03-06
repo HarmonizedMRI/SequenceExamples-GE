@@ -5,8 +5,8 @@
 
 dtDelay=1e-3;  % extra delay
 fov=200e-3; mtx=128; Nx=mtx; Ny=mtx;        % Define FOV and resolution
-Nint=1;
-Nprj=16;
+Nint=4;
+Nprj=1;
 Gmax=0.030;  % T/m
 Smax=120; % T/m/s
 sliceThickness=fov;             % slice thickness
@@ -14,6 +14,7 @@ Nslices=1;
 rfSpoilingInc = 117;                % RF spoiling increment
 Oversampling=2; % by looking at the periphery of the spiral I would say it needs to be at least 2
 deltak=1/fov;
+int_mode = 2; % 1 = in-plane interleaves, 2 = scaling (to test scale factors)
 
 % Set system limits
 % For tv6, just use default RF and gradient raster times (1us and 10us, respectively),
@@ -68,7 +69,7 @@ rf_phase = 0; rf_inc = 0;
 
 % init transformed kspace
 kspace = zeros(size(kx,1),3,Nint*Nprj);
-kspace0 = padarray([kx(:), ky(:)],[0,1],0,'post');
+kspace0 = padarray([kx(:,1), ky(:,1)],[0,1],0,'post');
 
 % Define sequence blocks
 for iprj=1:Nprj
@@ -84,9 +85,14 @@ for iprj=1:Nprj
         seq.addBlock(rf, gz,mr.makeLabel('SET', 'TRID', 1));
         seq.addBlock(gzReph);
 
-        % interleave rotation: rotate by golden angle about z
-        r_int = (iint-1)*pi*(3 - sqrt(5));
-        R_int = eul2rotm([r_int,0,0],'ZYX');
+        if int_mode == 1
+            % interleave rotation: rotate by golden angle about z
+            r_int = (iint-1)*pi*(3 - sqrt(5));
+            R_int = eul2rotm([r_int,0,0],'ZYX');
+        elseif int_mode == 2
+            % scale by interleaf index to test scale factor
+            R_int = iint/Nint * eye(3);
+        end
 
         % projection rotation: rotate by 3D golden angles
         % ref: Generalization of three-dimensional golden-angle radial acquisition
@@ -105,11 +111,11 @@ for iprj=1:Nprj
         gx_sp=mr.makeArbitraryGrad('x',0.99*iG(1,:),'Delay',dtDelay,'system',sys,'first',0,'last',0);
         gy_sp=mr.makeArbitraryGrad('y',0.99*iG(2,:),'Delay',dtDelay,'system',sys,'first',0,'last',0);
         gz_sp=mr.makeArbitraryGrad('z',0.99*iG(3,:),'Delay',dtDelay,'system',sys,'first',0,'last',0);
-        seq.addBlock(gx_sp,gy_sp,gz_sp,adc);
+        seq.addBlock(gx_sp,gy_sp,gz_sp,adc,mr.makeLabel('SET', 'TRID', 2));
 
         % Spoil, and extend TR to allow T1 relaxation
         % Avoid pure delay block here so that the gradient heating check on interpreter is accurate
-        seq.addBlock(gz_spoil, mr.makeDelay(20e-3));
+        seq.addBlock(gz_spoil,mr.makeDelay(20e-3),mr.makeLabel('SET', 'TRID', 3));
 
         % rotate kspace
         kspace(:,:,(iprj-1)*Nint + iint) = kspace0 * R';
