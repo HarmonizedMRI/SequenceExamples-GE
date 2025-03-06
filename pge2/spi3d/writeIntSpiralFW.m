@@ -6,7 +6,7 @@
 dtDelay=1e-3;  % extra delay
 fov=200e-3; mtx=128; Nx=mtx; Ny=mtx;        % Define FOV and resolution
 Nint=4;
-Nprj=1;
+Nprj=16;
 Gmax=0.030;  % T/m
 Smax=120; % T/m/s
 sliceThickness=fov;             % slice thickness
@@ -14,7 +14,7 @@ Nslices=1;
 rfSpoilingInc = 117;                % RF spoiling increment
 Oversampling=2; % by looking at the periphery of the spiral I would say it needs to be at least 2
 deltak=1/fov;
-int_mode = 2; % 1 = in-plane interleaves, 2 = scaling (to test scale factors)
+int_mode = 1; % 1 = in-plane interleaves, 2 = scaling (to test scale factors)
 
 % Set system limits
 % For tv6, just use default RF and gradient raster times (1us and 10us, respectively),
