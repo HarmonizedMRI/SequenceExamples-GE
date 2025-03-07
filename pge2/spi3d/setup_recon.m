@@ -1,6 +1,20 @@
 function [A,W,b] = setup_recon(varargin)
-% Set up the reconstruction model for SPI3D data
-% model: b = WAx + noise
+% Set up the reconstruction model for SPI3D data:
+% b = WAx + noise
+%
+% by David Frey (djfrey@umich.edu)
+%
+% Inputs:
+% safile - scanarchive data file name
+% (also reads arguments from seq_args.mat file in current directory)
+%
+% Outputs:
+% A - NUFFT operator (block diagonal if multiple scales are used)
+% W - density compensation weighting matrix
+% b - formatted measurements
+%
+% Note: each scale is treated as a seperate frame of the reconstruction
+%
     
     % set default arguments
     arg.safile = 'data.h5'; % scanarchive data file name
@@ -17,9 +31,9 @@ function [A,W,b] = setup_recon(varargin)
     [ndat,nc] = size(shot.Data);
     
     % load data
-    d = zeros(ndat, nc, seq_args.nint*seq_args.nprj);
+    d = zeros(ndat, nc, seq_args.nscl*seq_args.nint*seq_args.nprj);
     d(:, :, 1) = shot.Data;
-    for l = 2:seq_args.nint*seq_args.nprj
+    for l = 2:seq_args.nscl*seq_args.nint*seq_args.nprj
         shot = GERecon('Archive.Next', archive);
         d(:, :, l) = shot.Data;
     end
@@ -72,7 +86,12 @@ function [A,W,b] = setup_recon(varargin)
     end
     W = Gdiag(wi / sum(abs(wi)));
 
+    % repeat for each scale
+    A = kronI(seq_args.nscl,A);
+    W = kronI(seq_args.nscl,W);
+
     % mask out data
-    b = d(omega_msk);
+    d_r = reshape(d,[],seq_args.nscl);
+    b = d_r(omega_msk,:);
 
 end

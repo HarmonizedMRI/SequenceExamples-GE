@@ -1,8 +1,13 @@
 function R = rot_3dtga(prjn,intn)
 % 3D TINY golden angle rotation sequence
+%
+% Inputs:
 % prjn - projection (thru-plane rotation) index
 % intn - interleaf (in-plane rotation) index
+%
+% Outputs:
 % R - 3D golden angle rotation matrix
+%
 
     % interleaf rotation: rotate by golden angle about z
     r_int = (intn-1)*pi*(3 - sqrt(5));
