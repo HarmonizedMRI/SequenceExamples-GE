@@ -1,10 +1,10 @@
-# Spiral sequence for Pulseq on GE 
+# 3D TGA SPI sequence for Pulseq on GE 
 
-Code for sequence generation and recon provided by Florian Wiesinger, GE
+Code for sequence generation and recon provided by David Frey (djfrey@umich.edu)
 
 This example is for testing gradient rotation detection with seq2ceq.m 
 
-This example is interleaved 2D spiral.  
+This example is 3D TINY Golden Angle Spiral Projection Imaging.  
 The main thing to note is that **the same TRID is reused independently of rotation angle**.
 
 Tested by jfnielsen@gmail.com on the following system(s):
@@ -16,8 +16,8 @@ Tested by jfnielsen@gmail.com on the following system(s):
 To download the required MATLAB packages,
 create the pge sequence file, and reconstruct the data, see `main.m` in this folder.
 
-Example reconstruction result with PinvRecon\_IntSpiral:  
-![Example image](1.png)
+Example reconstruction result:  
+![image](https://github.com/user-attachments/assets/6f8a9bbb-a9e6-47d3-88c9-580bf4b66cdc)
 
 ## Motivation
 
