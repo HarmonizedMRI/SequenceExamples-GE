@@ -174,7 +174,7 @@ while r0 < rmax
 
 	if (rem(count,100)==0)
 		tt = sprintf('%d points, |k|=%f',count,r0);
-		disp(tt);
+		%disp(tt);
 	end;
 end;
 

@@ -1,27 +1,66 @@
-% actions
-createSequenceFile = 1;
-reconstruct = 0;
+%% Set parameters
+te_delay = 1e-3; % extra delay for TE (s)
+tr_delay = 200e-3; % extra delay for TR (s)
+fov = 20; % fov (cm)
+dt = 4e-6; % raster time (s)
+N = 128; % 3D matrix size
+nint = 1; % number of interleaves (2D in-plane rotations)
+nprj = 16; % number of projections (3D thru-plane rotations)
+gmax = 4; % max gradient amplitude (G/cm)
+smax = 12000; % max slew rate (G/cm/s)
+plotseq = true; % option to plot the sequence
+safile = 'data.h5'; % scanarchive data file name
+pislquant = 1; % number of prescan acquisitions to determine gains
+
+%% Set paths
+% Pulseq
+system('git clone --branch v1.5.0 git@github.com:pulseq/pulseq.git');
+addpath pulseq/matlab
+% PulCeq
+system('git clone --branch tv7 git@github.com:HarmonizedMRI/PulCeq.git');
+addpath PulCeq/matlab
+% TOPPE
+system('git clone --branch tv7 git@github.com:toppeMRI/toppe.git');
+addpath toppe
+% MIRT
+system('git clone git@github.com:JeffFessler/MIRT.git');
+run MIRT/setup.m
+
+%% Actions
+createSequenceFile = 0;
+reconstruct = 1;
 
 if createSequenceFile
-    % write spiral.seq
-    system('git clone --branch v1.5.0 git@github.com:pulseq/pulseq.git');
-    addpath pulseq/matlab
-    writeIntSpiralFW;   
 
-    % convert to spiral.pge
-    %system('git clone --branch v2.2.2 git@github.com:HarmonizedMRI/PulCeq.git');
-    system('git clone --branch tv7 git@github.com:fmrifrey/PulCeq.git');
-    addpath PulCeq/matlab
+    % create the 3D SPI .seq file with given parameters
+    write_seq( ...
+        'te_delay', te_delay, ...
+        'tr_delay', tr_delay, ...
+        'fov', fov, ...
+        'dt', dt, ...
+        'N', N, ...
+        'nint', nint, ...
+        'nprj', nprj, ...
+        'gmax', gmax, ...
+        'smax', smax, ...
+        'plotseq', plotseq ...
+        );
+
+    % convert to .pge file
     ceq = seq2ceq('spi3d.seq');
-    pislquant = 1;   % number of ADC events used for receive gain calibration
     writeceq(ceq, 'spi3d.pge', 'pislquant', pislquant);
+
 end
 
 if reconstruct
-    addpath ~/code/packages/orchestra-sdk-2.1-1.matlab/
-    PinvRecon_IntSpiral;
 
-    % or:
-    % recon_nufft;
+    % set up the system matrices
+    [A,W,b] = setup_recon('safile',safile);
+
+    % reconstruct with density-weighted NUFFT
+    img = reshape((W * A)' * b, N*ones(1,3));
+    im(abs(img))
+    title('dc-NUFFT reconstruction');
+
 end
 
