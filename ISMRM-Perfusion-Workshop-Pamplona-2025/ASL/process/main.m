@@ -2,14 +2,11 @@
 system('git clone --branch v2.4.0-alpha git@github.com:HarmonizedMRI/PulCeq.git');
 addpath PulCeq/matlab
 
-% smooth
-if 1
-    load ims
-    ims = imsos;
-else
-    ims = imsos;
-end
+% load reconstructed images
+load ../data/ims
+ims = imsos; clear imsos;
 
+% smooth (in-plane)
 nt = size(ims, 4);  % nt = 2*opnex = 2x number of control-tag pairs
 textprogressbar('smoothing: ');
 for t = 1:nt
