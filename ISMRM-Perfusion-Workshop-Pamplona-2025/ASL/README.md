@@ -14,7 +14,11 @@ See https://github.com/HarmonizedMRI/SequenceExamples-GE/tree/main/pge2/
 ## Reconstruct images
 
 1. Put the ScanArchive file in the `./data/` folder and rename it to `data.h5`
-2. Set number of runs (opnex) in the file `recon/recon_asl.m`
+
+2. Edit the file `recon/recon_asl.m`:
+   1. Set path to GE's Orcehstra toolbox (download from the GE research user forum)
+   2. Set number of runs (opnex). This value is set by the scanner operator.
+
 3. Run nufft reconstruction script:
    ```matlab
    >> run recon/recon_asl;

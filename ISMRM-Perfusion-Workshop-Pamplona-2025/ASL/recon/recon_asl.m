@@ -1,4 +1,10 @@
+% path to Orchestra toolbox
 addpath ~/Programs/orchestra-sdk-2.1-1.matlab/
+
+% number of 'runs' = number of times the sequence is repeated
+% Each run consists of one label-control pair
+opnex = 20;   
+nt = 2*opnex;  %2*74; %rhnframes;   % number of label-control pairs is nt/2
 
 load ../sequence/readout
 nz = readout.nz;  
@@ -6,17 +12,12 @@ nleaf = readout.nleaf;   % number of spiral leafs
 
 % load first shot and get data size
 clear archive
-archive = GERecon('Archive.Load', 'data.h5');
+archive = GERecon('Archive.Load', '../data/data.h5');
 shot = GERecon('Archive.Next', archive);
 
 [ndat nc] = size(shot.Data);
 
 %rhnframes = archive.DownloadData.rdb_hdr_rec.rdb_hdr_nframes;
-
-% number of 'runs' = number of times the sequence is repeated
-% Each run consists of one label-control pair
-opnex = 40;   
-nt = 2*opnex;  %2*74; %rhnframes;   % number of label-control pairs is nt/2
 
 d = zeros(ndat, nc, nleaf, nz, nt);
 
