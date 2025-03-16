@@ -13,7 +13,10 @@ shot = GERecon('Archive.Next', archive);
 
 %rhnframes = archive.DownloadData.rdb_hdr_rec.rdb_hdr_nframes;
 
-nt = 10; %2*74; %rhnframes;   % number of tag-control pairs is nt/2
+% number of 'runs' = number of times the sequence is repeated
+% Each run consists of one label-control pair
+opnex = 40;   
+nt = 2*opnex;  %2*74; %rhnframes;   % number of label-control pairs is nt/2
 
 d = zeros(ndat, nc, nleaf, nz, nt);
 
