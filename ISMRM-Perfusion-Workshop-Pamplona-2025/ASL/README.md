@@ -13,11 +13,17 @@ See https://github.com/HarmonizedMRI/SequenceExamples-GE/tree/main/pge2/
 
 ## Reconstruct images
 
-1. Put the ScanArchive file in the `./data/` folder and rename to `data.h5`
+1. Put the ScanArchive file in the `./data/` folder and rename it to `data.h5`
 2. Set number of runs (opnex) in the file `recon/recon_asl.m`
-3. Run nufft reconstruction:
+3. Run nufft reconstruction script:
    ```matlab
    >> run recon/recon_asl;
    ```
+4. Save the workspace variable `imsos` to a file named `ims.mat` and place it in the `./data/` folder.
+
 
 ## Perform ASL processing (control-label subtraction)
+
+```matlab
+>> run process/main;   % load and display ims.mat
+```
