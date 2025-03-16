@@ -57,6 +57,7 @@ for p =1:size(ctl,1)
 end
 textprogressbar('');
 
+% plot mean perfusion-weighted image
 ctl = reshape(ctl,[nx, nx, nz, nt/2-1]);
 lbl = reshape(lbl,[nx, nx, nz, nt/2-1]);
 
@@ -69,12 +70,14 @@ ms = mean(sub,4);
 sd = std(sub,[], 4);
 snrmap = ms ./sd;
 
+z1 = 7; z2 = 26;  % slices to include in plot
 s = max(ctl(:));
 figure;
-im('mid3', mc); colorbar;
+im(mean(mc(:,:,z1:z2,:)/s, 4)); colorbar;
 title('control, mean magnitude image across frames');
 figure;
-im(mean(sub, 4), 2e-2*s*[0 1]); colorbar;
+im(mean(sub(:,:,z1:z2,:)/s, 4), 2e-2*[0 1]); colorbar;
+title('Perfusion-weighted images (fraction of M0)');
 
 return
 
