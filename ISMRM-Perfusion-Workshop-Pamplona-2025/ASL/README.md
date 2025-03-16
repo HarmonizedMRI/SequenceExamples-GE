@@ -1,4 +1,7 @@
-# Pulseq ASL sequence, demonstrated on a GE 3T scanner
+# 3D FLASH/SPGR stack-of-spirals velocity-selective ASL sequence in Pulseq
+
+Here demonstrated on a GE 3T scanner.
+
 
 ## Create sequence files
 
@@ -6,12 +9,24 @@
 >> run sequence/main;
 ```
 
-## Execute the sequence on a GE scanner
+This creates the following Pulseq files,
+and the corresponding `.pge` files for GE scanners:
 
-See https://github.com/HarmonizedMRI/SequenceExamples-GE/tree/main/pge2/
+1. **asl.seq**: Contains one label/control pair, using a Fourier-transform velocity-selective inversion (FTVSI) pulse.
+2. **ir.seq**: Inversion-recovery sequence to test the adiabatic inversion pulse used for background suppression.
+3. **vir.seq**: Inserts unbalanced gradients to mimick flow, 
+    so that the FTVSI inversion profile can be validated in a stationary phantom.
+
+The readout is identical for all scans, and consists of
+an RF-spoiled gradient echo (FLASH/SPGR) 3D stack-of-spirals sequence.
 
 
-## Reconstruct images
+## Execute the sequence on a GE scanner using the 'Pulseq on GE v2' (pge2) interpreter
+
+See https://github.com/HarmonizedMRI/SequenceExamples-GE/tree/main/pge2/ for details.
+
+
+## Reconstruct perfusion-weighted images obtained with asl.seq
 
 1. Put the ScanArchive file in the `./data/` folder and rename it to `data.h5`
 
@@ -31,3 +46,5 @@ See https://github.com/HarmonizedMRI/SequenceExamples-GE/tree/main/pge2/
 ```matlab
 >> run process/main;   % load and display ims.mat
 ```
+
+![asl](asl.jpg)
