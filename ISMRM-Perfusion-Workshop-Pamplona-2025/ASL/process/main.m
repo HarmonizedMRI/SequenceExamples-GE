@@ -19,6 +19,10 @@ textprogressbar('');
 nx = size(ims,1);
 nz = size(ims,3);
 
+% slices to include in plot
+z1 = 1; z2 = nz;  
+%z1 = 7; z2 = 26;
+
 ims = reshape(ims, [], nt);
 textprogressbar('detrending: ');
 for p =1:size(ims,1)
@@ -67,7 +71,6 @@ ms = mean(sub,4);
 sd = std(sub,[], 4);
 snrmap = ms ./sd;
 
-z1 = 7; z2 = 26;  % slices to include in plot
 s = max(ctl(:));
 figure;
 im(mean(mc(:,:,z1:z2,:)/s, 4)); colorbar;
