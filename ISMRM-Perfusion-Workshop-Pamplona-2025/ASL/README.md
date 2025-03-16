@@ -26,7 +26,7 @@ an RF-spoiled gradient echo (FLASH/SPGR) 3D stack-of-spirals sequence.
 See https://github.com/HarmonizedMRI/SequenceExamples-GE/tree/main/pge2/ for details.
 
 
-## Reconstruct perfusion-weighted images obtained with asl.seq
+## Reconstruct magnitude (coil-combined) images obtained with asl.seq
 
 1. Put the ScanArchive file in the `./data/` folder and rename it to `data.h5`
 
@@ -41,7 +41,7 @@ See https://github.com/HarmonizedMRI/SequenceExamples-GE/tree/main/pge2/ for det
 4. Save the workspace variable `imsos` to a file named `ims.mat` and place it in the `./data/` folder.
 
 
-## Perform ASL processing (control-label subtraction)
+## Perform ASL processing (display perfusion-weighted images)
 
 ```matlab
 >> run process/main;   % load and display ims.mat
