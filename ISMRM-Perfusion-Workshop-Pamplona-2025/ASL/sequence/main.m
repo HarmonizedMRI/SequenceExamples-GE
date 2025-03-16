@@ -5,16 +5,12 @@ system('git clone --branch v1.5.0 git@github.com:pulseq/pulseq.git');
 addpath pulseq/matlab
 
 % functions for converting a Pulseq file (.seq) to a format suitable for GE
-%system('git clone --branch v2.2.2 git@github.com:HarmonizedMRI/PulCeq.git');
-system('git clone --branch tv7 git@github.com:fmrifrey/PulCeq.git');
+system('git clone --branch v2.4.0-alpha git@github.com:HarmonizedMRI/PulCeq.git');
 addpath PulCeq/matlab
-%addpath ~/github/HarmonizedMRI/PulCeq/matlab
 
 % we also need a few helper functions from here (for now)
 system('git clone --branch v1.9.1 git@github.com:toppeMRI/toppe.git');   
 addpath toppe
-
-addpath sim
 
 % System/design parameters
 %sys = mr.opts('maxGrad', 26, 'gradUnit','mT/m', ...
