@@ -13,7 +13,7 @@ shot = GERecon('Archive.Next', archive);
 
 %rhnframes = archive.DownloadData.rdb_hdr_rec.rdb_hdr_nframes;
 
-nt = 2*30; %2*74; %rhnframes;   % number of tag-control pairs is nt/2
+nt = 10; %2*74; %rhnframes;   % number of tag-control pairs is nt/2
 
 d = zeros(ndat, nc, nleaf, nz, nt);
 
@@ -54,5 +54,5 @@ ky = -readout.ky(1:ndat,:);  % rotations are negated, need to look into this TOD
 % recon
 d = permute(d, [1 3 4 5 2]);   % reshape to size [ndat nleaf nz nt ncoil]
 nx = readout.nx;
-[imsos ims dcf] = toppe.utils.spiral.reconSoS(d, kx, ky, 100*readout.fov(1:2), [nx nx], ...
+[imsos ims dcf] = toppe.utils.spiral.reconSoS(d, kx, ky, 100*readout.fov(1:2), 2*[nx nx], ...
                   'useParallel', false );
