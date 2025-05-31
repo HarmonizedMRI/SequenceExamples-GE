@@ -1,6 +1,7 @@
 # Sequence example with 1us dwell time (MAGNUS only)
 
-Under development
+Under development.  
+See https://github.com/jfnielsen/TOPPEpsdSourceCode/discussions/47
 
 To create .seq and .pge file, in MATLAB do:
 ```matlab
