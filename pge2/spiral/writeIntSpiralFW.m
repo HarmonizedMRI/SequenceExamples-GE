@@ -80,15 +80,16 @@ for iint=1:Nint
     % seq.addBlock(rf_fs,gz_fs, mr.makeLabel('SET', 'TRID', 1)); % fat-sat      % adding the TRID label needed by the GE interpreter
     seq.addBlock(rf, gz,mr.makeLabel('SET', 'TRID', 1));
     seq.addBlock(gzReph);
+
+    % rotated spiral leaf
     irot=(iint-1)*2*pi/Nint;
-    igx=+cos(irot)*gradSpiral(1,:)+sin(irot)*gradSpiral(2,:);
-    igy=-sin(irot)*gradSpiral(1,:)+cos(irot)*gradSpiral(2,:);
+    %igx=+cos(irot)*gradSpiral(1,:)+sin(irot)*gradSpiral(2,:);
+    %igy=-sin(irot)*gradSpiral(1,:)+cos(irot)*gradSpiral(2,:);
     % figure(100); plot(igx,'-k'); hold on, plot(igy,'-b');
     %figure(101); plot(cumsum(igx),cumsum(igy)); hold on,
-
     %gx=mr.makeArbitraryGrad('x',0.99*igx,'Delay',dtDelay,'system',sys, 'first', 0, 'last', 0);
     %gy=mr.makeArbitraryGrad('y',0.99*igy,'Delay',dtDelay,'system',sys, 'first', 0, 'last', 0);
-    R = toppe.angleaxis2rotmat(irot, [0 0 1]);
+    R = toppe.angleaxis2rotmat(irot, [0 0 1]);  % R = 3x3 rotation matrix. Rotate about z axis
     rot = mr.makeRotation(R);
     seq.addBlock(gx,gy,adc,rot);
     %seq.addBlock(gx,gy,adc);
