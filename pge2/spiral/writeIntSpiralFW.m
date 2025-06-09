@@ -15,9 +15,6 @@ Oversampling=2; % by looking at the periphery of the spiral I would say it needs
 deltak=1/fov;
 
 % Set system limits
-% For tv6, just use default RF and gradient raster times (1us and 10us, respectively),
-% since seq2ge.m will interpolate all waveforms to 4us raster time anyway,
-% and since the Pulseq toolbox seems to have been more fully tested with these default settings.
 % After creating the events, we'll do a bit of surgery below to make sure everything
 % falls on 4us boundaries
 sys = mr.opts('MaxGrad',Gmax*1e3, 'GradUnit', 'mT/m',...
