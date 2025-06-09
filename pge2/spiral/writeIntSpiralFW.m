@@ -47,7 +47,7 @@ dt=1/(2*BW);        % [s]
 nRaiseTime=ceil(Gmax/Smax/sys.gradRasterTime);
 nRaiseTime = round(nRaiseTime/2)*2;
 gSpiral=[g,linspace(g(end),0,nRaiseTime)]/1e2*sys.gamma;
-[kx, ky] = toppe.utils.g2k(1e2/sys.gamma*[real(gSpiral(:)) imag(gSpiral(:))], Nint);
+%[kx, ky] = toppe.utils.g2k(1e2/sys.gamma*[real(gSpiral(:)) imag(gSpiral(:))], Nint);
 figure, plot(real(gSpiral)); hold on, plot(imag(gSpiral));
 clear gradSpiral;
 gradSpiral(1,:)=real(gSpiral);
@@ -81,19 +81,12 @@ for iint=1:Nint
 
     % rotated spiral leaf
     irot=(iint-1)*2*pi/Nint;
-    %igx=+cos(irot)*gradSpiral(1,:)+sin(irot)*gradSpiral(2,:);
-    %igy=-sin(irot)*gradSpiral(1,:)+cos(irot)*gradSpiral(2,:);
-    % figure(100); plot(igx,'-k'); hold on, plot(igy,'-b');
-    %figure(101); plot(cumsum(igx),cumsum(igy)); hold on,
-    %gx=mr.makeArbitraryGrad('x',0.99*igx,'Delay',dtDelay,'system',sys, 'first', 0, 'last', 0);
-    %gy=mr.makeArbitraryGrad('y',0.99*igy,'Delay',dtDelay,'system',sys, 'first', 0, 'last', 0);
-    R = toppe.angleaxis2rotmat(irot, [0 0 1]);  % R = 3x3 rotation matrix. Rotate about z axis
-    rot = mr.makeRotation(R);
+    irot = angle(exp(1i*irot)); % wrap to [-pi pi] range
+    rot = mr.makeRotation([0 0 1], irot);  % rotation event. axis-angle notation
     seq.addBlock(gx,gy,adc,rot);
-    %seq.addBlock(gx,gy,adc);
 
     % Spoil, and extend TR to allow T1 relaxation
-    % Avoid pure delay block here so that the gradient heating check on interpreter is accurate
+    % Avoid pure delay block here so that the gradient heating check in GE interpreter is accurate? No longer true I think but check. TODO
     seq.addBlock(gz_spoil, mr.makeDelay(0.001)); 
 end
 
