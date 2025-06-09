@@ -6,8 +6,8 @@ if createSequenceFile
     % write spiral.seq
     system('git clone --branch dev git@github.com:pulseq/pulseq.git');
     addpath pulseq/matlab
-    system('git clone --branch v1.9.1 git@github.com:toppeMRI/toppe.git');
-    addpath toppe
+    %system('git clone --branch v1.9.1 git@github.com:toppeMRI/toppe.git');
+    %addpath toppe
     writeIntSpiralFW;   
 
     % convert to spiral.pge
