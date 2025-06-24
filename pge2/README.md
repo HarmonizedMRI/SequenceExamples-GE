@@ -134,26 +134,52 @@ https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/
 
 The key points to keep in mind when creating a .seq file for the pge2 interpreter are summarized here.
 
+
 ### Define segments (block groups) by adding TRID labels
 
 As in tv6, we define a 'segment' as a consecutive sub-sequence of Pulseq blocks that are always executed together,
 such as a TR or a magnetization preparation section.
 The GE interpreter needs this information to construct the sequence.
 
-Therefore, you must add `TRID` labels to mark the beginning of each TR or sequence sub-module. 
-You can see how this is done in the examples included in this repository.
-See also the Pulseq on GE v1 (tv6) manual.
+To clarify this concept, we define the following:
+* **base block:** A Pulseq block with normalized waveform amplitudes. The base blocks are the fundamental building blocks, or 'atoms', of the sequence.
+* **virtual segment:** A sequence of base blocks in a particular order (with normalized amplitudes). 
+You can think of this as an abstract segment.
+* **segment instance:** a segment realization/occurrence within the pulse sequence, with specified waveform amplitudes and phase/frequency offsets.
+A pulse sequence typically contains multiple instances of any given virtual segment:
+
+![Segment illustration](images/segments.png)
+
+In pratice, this means that you must **mark the beginning of each segment in the sequence with the TRID label** in the Pulseq toolbox.
+Example:
+```
+inversionVirtualSegmentID = 4;  % any unique integer, in no particular order
+imagingVirtualSegmentID = 2;
+
+% Play an instance of the inversion virtual segment
+seq.addBlock(rf_inv, mr.makeDelay(1), mr.makeLabel('SET', 'TRID', inversionVirtualSegmentID));
+
+for i = 1:Ny
+    % Play in instance of the imaging virtual segment
+    seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', virtualSegmentID));
+    ...
+    seq.addblock(gxPre, mr.scaleGrad(gy, (i-Ny/2-1)/(Ny/2)));
+    seq.addBlock(gx, adc);
+    seq.addblock(gxSpoil, mr.scaleGrad(gy, -(i-Ny/2-1)/(Ny/2)));
+    ...
+end
+```
+See also the examples included in this repository.
+The TRID can be any unique integer, in no particular order. 
+The TRID labels the **virtual** segment, NOT the segment instance.
 
 When assigning TRID labels, **follow these rules**:
 1. Add a TRID label to the first block in a segment. 
-   If a segment is repeated later in the sequence, you should generally re-use the same TRID;
-   see further comments below.
 2. Each segment must contain at least one rf or gradient event.
    Otherwise, the safety checks done by the pge2 interpreter may fail.
 3. Gradient waveforms must ramp to zero at the beginning and end of a segment.
 
-Dynamic sequence changes that **do not** require a separate segment (TRID) to be assigned
-when a segment is repeated:
+Dynamic sequence changes that **do not** require the creation of an additional (unique) TRID label:
 * gradient/RF amplitude scaling
 * RF/receive phase 
 * duration of a pure delay block (block containing only a delay event)
@@ -165,11 +191,11 @@ Dynamic sequence changes that **do** require a separate segment (TRID) to be ass
 * duration of any of the blocks within a segment, unless it is a pure delay block
 
 Other things to note:
-* When creating a segment, the interpreter inserts a 116us dead time (gap) at the end of each segment.
+* The interpreter inserts a 116us dead time (gap) at the end of each segment instance.
 Please account for this when creating your .seq file.
-(Actually, this gap is adjustable on the scanner -- it is equal to 16us plus ssi time.)
-* Each segment takes up waveform memory in hardware, so it is generally good practice 
-to divide your sequence into as few segments as possible, each being as short as possible.
+(Actually, this gap is adjustable on the scanner -- it is equal to 16us plus the ssi time.)
+* Each **virtual** segment takes up waveform memory in hardware, so it is generally good practice 
+to divide your sequence into as few virtual segments as possible, each being as short as possible.
   
 
 ### Set system hardware parameters
