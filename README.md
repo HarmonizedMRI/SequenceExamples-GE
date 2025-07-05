@@ -1,4 +1,4 @@
-# Pulseq on GE examples for learning and testing
+# Pulseq on GE examples
 
 **Updated January 2025**
 
