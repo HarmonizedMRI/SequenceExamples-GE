@@ -160,7 +160,7 @@ imagingVirtualSegmentID = 2;
 seq.addBlock(rf_inv, mr.makeDelay(1), mr.makeLabel('SET', 'TRID', inversionVirtualSegmentID));
 
 for i = 1:Ny
-    % Play in instance of the imaging virtual segment
+    % Play an instance of the imaging virtual segment
     seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', virtualSegmentID));
     ...
     seq.addblock(gxPre, mr.scaleGrad(gy, (i-Ny/2-1)/(Ny/2)));
