@@ -10,7 +10,7 @@ It generates the following 3 `.seq` and `.pge` files:
 3. `GRE`: GRE sequence for sensitivity map estimation.
 
 It also generates the following `.mat` files:
-1. `kxoe$Nx`: contains the k-space sampling locations along the readout or kx direction. Used later to grid ramp-sampled data.
+1. `kxoe$Nx`: contains the k-space sampling locations along the readout or kx direction, where Nx is the number of Cartesian locations. Used later to grid ramp-sampled data.
 2. `samp_log`: contains the order of k-space sampling indices. Used later to allocate sampled data onto a zero-filled grid.
 
 This example demonstrates a 3D EPI acquisition with the following parameters, described in `params.m`:
