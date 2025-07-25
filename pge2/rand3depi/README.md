@@ -14,7 +14,7 @@ It also generates the following `.mat` files:
 2. `samp_log`: contains the order of k-space sampling indices. Used later to allocate sampled data onto a zero-filled grid.
 
 This example demonstrates a 3D EPI acquisition with the following parameters, described in `params.m`:
-| Acceleration | Acquisition array | Field of view | Resolution | TR | Duration (frames)|
+| Acceleration | Acquisition array | Field of view | Resolution | volume TR | Duration (frames)|
 | --- | --- | --- | --- | --- | --- |
 | 1x | 90 x 90 x 60 | 216 x 216 x 144 mm | 2.4 mm isotropic | 5 s | 60 s (12) |
 
@@ -24,7 +24,8 @@ Tested on the following system(s):
 | GE MR750 | MR30.1\_R01 | [v2.5.0-beta](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta) | [v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) |
 
 Example reconstruction results:  
-**TODO: insert images here**
+Fully-sampled, sensitivity map weighted coil combined images:  
+
 
 For more advanced locally low-rank (LLR) reconstruction, check out [this repo](https://github.com/rextlfung/fmri-recon), which is under active development using the Julia language.
 
