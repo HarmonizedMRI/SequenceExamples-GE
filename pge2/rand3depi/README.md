@@ -25,7 +25,7 @@ Tested on the following system(s):
 
 Example reconstruction results:  
 Fully-sampled, sensitivity map weighted coil combined images:  
-
+![1x_recon_images](https://github.com/HarmonizedMRI/SequenceExamples-GE/blob/main/pge2/rand3depi/readme_imgs/1x_recon.png)
 
 For more advanced locally low-rank (LLR) reconstruction, check out [this repo](https://github.com/rextlfung/fmri-recon), which is under active development using the Julia language.
 
