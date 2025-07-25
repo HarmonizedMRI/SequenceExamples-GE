@@ -4,10 +4,19 @@ Code for sequence generation and basic recon provided by Rex Fung (rexfung@umich
 
 This example is 3D Echo Planar Imaging (3D EPI).
 
-This example demonstrates a 3D EPI acquisition with the following parameters:
-| Acceleration | Acquisition array | Field of view | Resolution | TR |
-| --- | --- | --- | --- | --- |
-| 1x | 90 x 90 x 60 | 216 x 216 x 144 mm | 2.4 mm isotropic | 4.2 s |
+It generates the following 3 `.seq` and `.pge` files:
+1. `randEPI`: 3D EPI sequence with optional random undersampling. There is no acceleration in this example.
+2. `EPIcal`: A short EPI sequence without phase encoding. Used to calibrate receiver gains and estimate phase difference between odd/even echoes.
+3. `GRE`: GRE sequence for sensitivity map estimation.
+
+It also generates the following `.mat` files:
+1. `kxoe$Nx`: contains the k-space sampling locations along the readout or kx direction, where Nx is the number of Cartesian locations. Used later to grid ramp-sampled data.
+2. `samp_log`: contains the order of k-space sampling indices. Used later to allocate sampled data onto a zero-filled grid.
+
+This example demonstrates a 3D EPI acquisition with the following parameters, described in `params.m`:
+| Acceleration | Acquisition array | Field of view | Resolution | volume TR | Duration (frames)|
+| --- | --- | --- | --- | --- | --- |
+| 1x | 90 x 90 x 60 | 216 x 216 x 144 mm | 2.4 mm isotropic | 5 s | 60 s (12) |
 
 Tested on the following system(s):
 | Scanner | Scanner SW version | pge2 version | PulCeq version |  
@@ -15,7 +24,8 @@ Tested on the following system(s):
 | GE MR750 | MR30.1\_R01 | [v2.5.0-beta](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta) | [v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) |
 
 Example reconstruction results:  
-**TODO: insert images here**
+Fully-sampled, sensitivity map weighted coil combined images:  
+
 
 For more advanced locally low-rank (LLR) reconstruction, check out [this repo](https://github.com/rextlfung/fmri-recon), which is under active development using the Julia language.
 
