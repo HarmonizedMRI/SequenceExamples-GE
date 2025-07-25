@@ -59,8 +59,8 @@ T1 = 1500e-3;                       % T1 (s)
 
 % Number of frames to write in sequence, which is then looped on the scanner
 minNframesPerLoop = lcm(40,Nshots)/Nshots; % number of temporal frames to complete one RF spoil cycle
-task_period = 20; % block experiment duration
-NframesPerLoop = floor(task_period/volumeTR/minNframesPerLoop)*minNframesPerLoop;
+duration = 60; % experiment duration (s)
+NframesPerLoop = floor(duration/volumeTR/minNframesPerLoop)*minNframesPerLoop;
 
 % Dummy parameters
 Ndummyframes = round(3*T1/TR); % dummy frames to reach steady state for calibration
@@ -89,7 +89,7 @@ N_gre = round(fov_gre./res_gre); % acquisiton tensor size
 Nx_gre = N_gre(1); Ny_gre = N_gre(2); Nz_gre = N_gre(3);
 
 % Temporal parameters
-NdummyZloops = 4; % number of dummy excitations to reach steady state
+NdummyZloops = 10; % number of dummy excitations to reach steady state
 
 % Other acquisition params
 TE_gre = 1/fatOffresFreq + 2e-4; % fat and water in phase for both echoes

@@ -9,7 +9,7 @@
 run('params.m');
 
 % Temporary modifications
-NframesPerLoop = 1; % Only one frame for plotting k-space trajectory
+% NframesPerLoop = 1; % Only one frame for plotting k-space trajectory
 
 %% Path and options
 seqname = 'randEPI';
@@ -326,6 +326,7 @@ writeceq(ceq, strcat(seqname, '.pge'), 'pislquant', pislquant);   % write Ceq st
 
 %% Plot in pulseq
 seq.plot('timeRange', [0 max(minTR, TR)]);
+return;
 
 %% Plot trajectories stringing together samples (ChatGPT)
 figure('WindowState','maximized');

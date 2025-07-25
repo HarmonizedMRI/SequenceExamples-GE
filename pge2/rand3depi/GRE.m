@@ -95,12 +95,19 @@ pe2Steps = ((0:Nz_gre-1)-Nz_gre/2)/Nz_gre*2;
 %% Calculate timing
 TEmin = mr.calcDuration(rf)/2 + mr.calcDuration(gzSSR)...
       + mr.calcDuration(gxPre) + adc.delay + Nx_gre/2*dwell;
-delayTE = ceil((TE_gre-TEmin)/seq.gradRasterTime)*seq.gradRasterTime;
+if TE_gre > TEmin
+    delayTE = ceil((TE_gre-TEmin)/seq.gradRasterTime)*seq.gradRasterTime;
+else
+    delayTE = 0;
+end
 TRmin = mr.calcDuration(rf) + mr.calcDuration(gzSSR)...
       + delayTE + mr.calcDuration(gxPre)...
       + mr.calcDuration(gx) + mr.calcDuration(gxSpoil);
-delayTR = ceil((TR_gre-TRmin)/seq.gradRasterTime)*seq.gradRasterTime;
-
+if TR_gre > TRmin
+    delayTR = ceil((TR_gre-TRmin)/seq.gradRasterTime)*seq.gradRasterTime;
+else
+    delayTR = 0;
+end
 %% Loop over phase encodes and define sequence blocks
 % iZ < 0: Dummy shots to reach steady state
 % iZ = 0: ADC is turned on and used for receive gain calibration on GE scanners
