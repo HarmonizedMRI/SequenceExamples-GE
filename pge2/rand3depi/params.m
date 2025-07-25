@@ -41,8 +41,8 @@ fov = N .* res; % field of view (m)
 Nx = N(1); Ny = N(2); Nz = N(3);
 
 % Random undersampling parameters. Total acceleration = Ry*Rz*caipi_z
-Ry = 1; Rz = 1; % Acceleration/undersampling factors in each direction
-caipi_z = 1; % Number of kz locations to acquire per shot. Must be positive integer
+Ry = 2; Rz = 2; % Acceleration/undersampling factors in each direction
+caipi_z = 2; % Number of kz locations to acquire per shot. Must be positive integer
 R = [Ry Rz];
 acs = [0 0]; % Central portion of ky-kz space to fully sample
 max_ky_step = round(Ny/16); % Maximum gap in fast PE direction
@@ -53,7 +53,7 @@ Nshots = ceil(length(1:caipi_z:(Nz - caipi_z + 1))/Rz); % Number of shots per vo
 
 % Decay parameters
 TE = 30.5e-3;                         % echo time (s)
-volumeTR = 4.2;                     % temporal frame rate (s)
+volumeTR = 5/6;                     % temporal frame rate (s)
 TR = volumeTR / Nshots;             % repetition time (s)
 T1 = 1500e-3;                       % T1 (s)
 

@@ -41,8 +41,8 @@ fov = N .* res; % field of view (m)
 Nx = N(1); Ny = N(2); Nz = N(3);
 
 % Random undersampling parameters. Total acceleration = Ry*Rz*caipi_z
-Ry = 1; Rz = 1; % Acceleration/undersampling factors in each direction
-caipi_z = 1; % Number of kz locations to acquire per shot. Must be positive integer
+Ry = 2; Rz = 2; % Acceleration/undersampling factors in each direction
+caipi_z = 2; % Number of kz locations to acquire per shot. Must be positive integer
 R = [Ry Rz];
 acs = [0 0]; % Central portion of ky-kz space to fully sample
 max_ky_step = round(Ny/16); % Maximum gap in fast PE direction
@@ -53,14 +53,14 @@ Nshots = ceil(length(1:caipi_z:(Nz - caipi_z + 1))/Rz); % Number of shots per vo
 
 % Decay parameters
 TE = 30.5e-3;                         % echo time (s)
-volumeTR = 4.2;                     % temporal frame rate (s)
+volumeTR = 5/6;                     % temporal frame rate (s)
 TR = volumeTR / Nshots;             % repetition time (s)
 T1 = 1500e-3;                       % T1 (s)
 
 % Number of frames to write in sequence, which is then looped on the scanner
 minNframesPerLoop = lcm(40,Nshots)/Nshots; % number of temporal frames to complete one RF spoil cycle
-task_period = 20; % block experiment duration
-NframesPerLoop = floor(task_period/volumeTR/minNframesPerLoop)*minNframesPerLoop;
+duration = 60; % experiment duration (s)
+NframesPerLoop = floor(duration/volumeTR/minNframesPerLoop)*minNframesPerLoop;
 
 % Dummy parameters
 Ndummyframes = round(3*T1/TR); % dummy frames to reach steady state for calibration
@@ -89,7 +89,7 @@ N_gre = round(fov_gre./res_gre); % acquisiton tensor size
 Nx_gre = N_gre(1); Ny_gre = N_gre(2); Nz_gre = N_gre(3);
 
 % Temporal parameters
-NdummyZloops = 4; % number of dummy excitations to reach steady state
+NdummyZloops = 10; % number of dummy excitations to reach steady state
 
 % Other acquisition params
 TE_gre = 1/fatOffresFreq + 2e-4; % fat and water in phase for both echoes

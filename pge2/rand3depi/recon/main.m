@@ -23,18 +23,19 @@ addpath('/home/rexfung/github/hmriutils'); % EPI odd/even correction
 run('./params.m');
 
 % Total number of time frames
-Nloops = 5; % TOPPE CV #8
+Nloops = 1; % TOPPE CV #8
 Nframes = Nloops*NframesPerLoop;
 
 % Coil compression params
 Nvcoils = 10; % Chosen based on visual inspection of the "knee" in SVs
 
 % Filenames
-datdir = '/mnt/storage/rexfung/20241017tap/';
+datdir = '/mnt/storage/rexfung/20250725ball/';
 fn_cal = strcat(datdir, 'cal.h5');
-fn_epi = strcat(datdir, 'loop.h5');
+fn_epi = strcat(datdir, 'randEPI_6x.h5');
 fn_gre = strcat(datdir, 'gre.h5');
-fn_samp_log = strcat(datdir, 'samp_logs/46.mat');
+fn_samp_log = strcat(datdir, 'samp_logs/6x.mat');
+fn_oe_locs = strcat(datdir, sprintf('samp_logs/kxoe%d.mat', Nx));
 fn_smaps = strcat(datdir, 'recon/smaps.mat');
 
 % Options
@@ -71,34 +72,33 @@ fprintf('Max real part of epi data: %d\n', max(real(ksp_epi_raw(:))))
 fprintf('Max imag part of epi data: %d\n', max(imag(ksp_epi_raw(:))))
 
 %% Coil-compress using compression matrix Vr
-ksp_cal = reshape(permute(ksp_cal_raw, [1 3 2]), [], Ncoils) * Vr;
-ksp_cal = permute(reshape(ksp_cal, Nfid, [], Nvcoils), [1 3 2]);
-ksp_epi = reshape(permute(ksp_epi_raw, [1 3 2]), [], Ncoils) * Vr;
-ksp_epi = permute(reshape(ksp_epi, Nfid, [], Nvcoils), [1 3 2]);
+ksp_cal_raw = reshape(permute(ksp_cal_raw, [1 3 2]), [], Ncoils) * Vr;
+ksp_cal_raw = permute(reshape(ksp_cal_raw, Nfid, [], Nvcoils), [1 3 2]);
+ksp_epi_raw = reshape(permute(ksp_epi_raw, [1 3 2]), [], Ncoils) * Vr;
+ksp_epi_raw = permute(reshape(ksp_epi_raw, Nfid, [], Nvcoils), [1 3 2]);
 
 %% Compute odd/even delays using calibration (blipless) data
-if showEPIphaseDiff
-    close all;
-end
 
 % Reshape and permute calibration data (a single frame w/out blips)
-ksp_cal = permute(ksp_cal,[1 3 2]); % [Nfid Ny*Nshots Ncoils]
+ksp_cal = permute(ksp_cal_raw,[1 3 2]); % [Nfid Ny*Nshots Ncoils]
 ksp_cal = ksp_cal(:,1:Ny/2, :, :); % Use the first half of echoes (higher SNR)
 
 % Estimate k-space center offset due to gradient delay using max of each echo
 % train
 cal_data = squeeze(abs(mean(ksp_cal, 3)));
-cal_data(:,1:2:end,:,:) = flip(cal_data(:,1:2:end,:,:),1);
+cal_data(:,2:2:end,:,:) = flip(cal_data(:,2:2:end,:,:),1);
 [M, I] = max(cal_data,[],1);
-delay = Nfid/2 - mean(I,'all');
+delay = Nfid - 2*mean(I,'all');
+delay = -2;
 fprintf('Estimated offset from center of k-space (samples): %f\n', delay);
 
 % retrieve sample locations from .mod file with adc info
 % fn_adc = strcat(datdir, sprintf('adc%d.mod', Nfid));
 % % [rf,gx,gy,gz,desc,paramsint16,pramsfloat,hdr] = toppe.readmod(fn_adc);
 % [kxo, kxe] = toppe.utils.getk(sysGE, fn_adc, Nfid, delay);
-load(strcat(datdir, sprintf('oe_locs/kxoe%d.mat', Nx)),'kxo', 'kxe');
+load(fn_oe_locs, 'kxo', 'kxe');
 kxo = kxo/100; kxe = kxe/100; % convert to cycles/cm
+kxo = kxo + delay*(kxo(2) - kxo(1)); kxe = kxe + delay*(kxe(2) - kxe(1)); % apply estimated delays
 
 % Extract even number of lines (in case ETL is odd)
 ETL_even = size(ksp_cal,2) - mod(size(ksp_cal,2),2);
@@ -111,11 +111,9 @@ oephase_data = ifftshift(ifft(fftshift(oephase_data),Nx,1));
 fprintf('Constant phase offset (radians): %f\n', a(1));
 fprintf('Linear term (radians/fov): %f\n', a(2));
 
-clear ksp_cal_raw;
-
 %% Grid and apply odd/even correction to EPI data
 % Reshape and permute loop data
-ksp_epi = reshape(ksp_epi,Nfid,Nvcoils,2*ceil(Ny/Ry/2)*round(Nz/caipi_z/Rz),Nframes);
+ksp_epi = reshape(ksp_epi_raw,Nfid,Nvcoils,2*ceil(Ny/Ry/2)*round(Nz/caipi_z/Rz),Nframes);
 ksp_epi = permute(ksp_epi,[1 3 2 4]); % [Nfid Ny/Ry*Nz/Rz Nvcoils Nframes]
 
 % Grid along kx direction via NUFFT (takes a while)
@@ -187,29 +185,30 @@ if doSENSE
         tic
             smaps_raw = makeSmaps(ksp_gre, SENSEmethod);
         toc
-
-        % Save for next time
-        save(fn_smaps, 'smaps_raw', '-v7.3');
     end
     
+    smaps = smaps_raw;
+
     % Mask
-    % smaps = smaps_raw;
     % smaps(repmat(eigmaps>8*threshold,1,1,1,32)) = 0;
 
-    % % Crop in z to match EPI FoV
-    % z_start = round((fov_gre(3) - fov(3))/fov_gre(3)/2*Nz_gre + 1);
-    % z_end = round(Nz_gre - (fov_gre(3) - fov(3))/fov_gre(3)/2*Nz_gre);
-    % smaps = smaps(:,:,z_start:z_end,:);
-    % 
-    % % Interpolate to match EPI data dimensions
-    % smaps_new = zeros(Nx,Ny,Nz,Nvcoils);
-    % for coil = 1:Nvcoils
-    %     smaps_new(:,:,:,coil) = imresize3(smaps(:,:,:,coil),[Nx,Ny,Nz]);
-    % end
-    % smaps = smaps_new; clear smaps_new;
+    % Crop in z to match EPI FoV
+    z_start = round((fov_gre(3) - fov(3))/fov_gre(3)/2*Nz_gre + 1);
+    z_end = round(Nz_gre - (fov_gre(3) - fov(3))/fov_gre(3)/2*Nz_gre);
+    smaps = smaps(:,:,z_start:z_end,:);
+
+    % Interpolate to match EPI data dimensions
+    smaps_new = zeros(Nx,Ny,Nz,Nvcoils);
+    for coil = 1:Nvcoils
+        smaps_new(:,:,:,coil) = imresize3(smaps(:,:,:,coil),[Nx,Ny,Nz]);
+    end
+    smaps = smaps_new; clear smaps_new;
 
     % Align x-direction of smaps with EPI data (sometimes necessary)
     % smaps = flip(smaps,1);
+
+    % Save for next time
+    save(fn_smaps, 'smaps', 'smaps_raw', '-v7.3');
 end
 
 %% Coil combination

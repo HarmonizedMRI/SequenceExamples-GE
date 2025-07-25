@@ -1,22 +1,30 @@
 %% CG-SENSE recon with BART
 % Load data
-kdata_path = "/mnt/storage/rexfung/20241121ball/kdata2x3.mat";
-smaps_path = "/mnt/storage/rexfung/20241121ball/smaps.mat";
+kdata_path = "/mnt/storage/rexfung/20250725ball/recon/ksp6x.mat";
+smaps_path = "/mnt/storage/rexfung/20250725ball/recon/smaps.mat";
 
-kdata = matfile(kdata_path); % ksp_zf
+load(kdata_path); % ksp_epi_zf
 load(smaps_path); % smaps
+run('params.m'); % params
 
-Nx = 120; Ny = 120; Nz = 40; Ncoils = 32; Nframes = 20;
+[Nx, Ny, Nz, Nvcoils, Nframes] = size(ksp_epi_zf);
 
 %% Recon with CG-SENSE
 tic;
 img = zeros(Nx,Ny,Nz,Nframes);
-parfor frame = 1:Nframes
+for frame = 1:Nframes
     fprintf('Reconstructing frame %d\n', round(frame));
-    data = squeeze(kdata.ksp_zf(:,:,:,:,frame));
+    data = squeeze(ksp_epi_zf(:,:,:,:,frame));
     img(:,:,:,frame) = bart('pics -l1 -r0.001', data, smaps);
 end
 toc;
+
+%% Viz
+interactive4D(abs(flip(permute(img, [2 1 3 4]), 1)));
+ksp = toppe.utils.ift3(img);
+interactive4D(abs(flip(permute(log(abs(ksp) + eps), [2 1 3 4]), 1)));
+
+return;
 
 %% Viz
 frame = 1;
@@ -26,4 +34,4 @@ title(sprintf('|image|, middle 3 planes of frame %d',frame));
 ylabel('z, y'); xlabel('x, z')
 
 %% Save
-save('icg_1e-3.mat','img','-v7.3');
+save('cg_recon_1e-3.mat','img','-v7.3');
