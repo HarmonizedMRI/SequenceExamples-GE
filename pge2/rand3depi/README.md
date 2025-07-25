@@ -16,7 +16,7 @@ It also generates the following `.mat` files:
 This example demonstrates a 3D EPI acquisition with the following parameters, described in `params.m`:
 | Acceleration | Acquisition array | Field of view | Resolution | TR | Duration (frames)|
 | --- | --- | --- | --- | --- | --- |
-| 1x | 90 x 90 x 60 | 216 x 216 x 144 mm | 2.4 mm isotropic | 4.2 s | 58.8 s (14) |
+| 1x | 90 x 90 x 60 | 216 x 216 x 144 mm | 2.4 mm isotropic | 5 s | 60 s (12) |
 
 Tested on the following system(s):
 | Scanner | Scanner SW version | pge2 version | PulCeq version |  
