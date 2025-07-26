@@ -4,6 +4,8 @@ Code for sequence generation and basic recon provided by Rex Fung (rexfung@umich
 
 This example is 3D Echo Planar Imaging (3D EPI).
 
+Start with `params.m` and `main.m`.
+
 It generates the following 3 `.seq` and `.pge` files:
 1. `randEPI`: 3D EPI sequence with optional random undersampling. There is no acceleration in this example.
 2. `EPIcal`: A short EPI sequence without phase encoding. Used to calibrate receiver gains and estimate phase difference between odd/even echoes.
