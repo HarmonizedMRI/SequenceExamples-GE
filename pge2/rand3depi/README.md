@@ -32,8 +32,11 @@ Example reconstruction results:
 Fully-sampled, sensitivity map weighted coil combined images:  
 ![1x_recon_images](https://github.com/HarmonizedMRI/SequenceExamples-GE/blob/main/pge2/rand3depi/readme_imgs/1x_recon.png)
 
-6x undersampled, l1-regularized SENSE reconstruction. A particularly artifactual frame is shown here:
-![6x_recon_iamges](https://github.com/HarmonizedMRI/SequenceExamples-GE/blob/main/pge2/rand3depi/readme_imgs/6x_recon.png)
+8x undersampled, l1-regularized SENSE reconstruction.
+![8x_recon_good](https://github.com/HarmonizedMRI/SequenceExamples-GE/blob/main/pge2/rand3depi/readme_imgs/8x_recon_good.png)
+
+A particularly artifactual frame is shown here:
+![8x_recon_bad](https://github.com/HarmonizedMRI/SequenceExamples-GE/blob/main/pge2/rand3depi/readme_imgs/8x_recon_bad.png)
 
 For more advanced locally low-rank (LLR) reconstruction, check out [this repo](https://github.com/rextlfung/fmri-recon), which is under active development using the Julia language.
 
