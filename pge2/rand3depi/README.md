@@ -19,7 +19,7 @@ This example demonstrates a 3D EPI acquisition with the following parameters, de
 | Acceleration | Acquisition array | Field of view | Resolution | volume TR | Duration (frames)|
 | --- | --- | --- | --- | --- | --- |
 | 1x | 90 x 90 x 60 | 216 x 216 x 144 mm | 2.4 mm isotropic | 5 s | 60 s (12) |
-| 6x | 90 x 90 x 60 | 216 x 216 x 144 mm | 2.4 mm isotropic | 5/6 s | 60 s (72) |
+| 8x | 90 x 90 x 60 | 216 x 216 x 144 mm | 2.4 mm isotropic | 5/6 s | 60 s (72) |
 
 Tested on the following system(s):
 | Scanner | Scanner SW version | pge2 version | PulCeq version |  
