@@ -52,7 +52,7 @@ gxSpoil = mr.makeTrapezoid('x', 'Area', 2*Nx*deltak, 'system', sys);
 gzSpoil = mr.makeTrapezoid('z', 'Area', 4/sliceThickness, 'system', sys);
 
 % trigger out (TTL) pulse
-trig_out = mr.makeDigitalOutputPulse('ext1', 'delay', 100e-6, 'duration', 120e-6);
+trig_out = mr.makeDigitalOutputPulse('ext1', 'delay', 200e-6, 'duration', 120e-6);
 
 % Calculate delay to achieve desired TR
 seqtmp = mr.Sequence(sys);
