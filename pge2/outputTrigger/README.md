@@ -2,9 +2,10 @@
 
 2D SPGR acquisition with a trigger out pulse placed before readout (ADC) window.
 
-Tested on the following system(s):  
+To be tested on the following system(s):  
 | Scanner | Scanner SW version | pge2 version | PulCeq version |  
 | --- | --- | --- | --- |
+|     |     | tv7\_dev branch | tv7\_dev branch |
 
 To download the required MATLAB packages,
 create the pge sequence file, and reconstruct the data, see `main.m` in this folder.

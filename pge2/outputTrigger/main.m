@@ -6,12 +6,11 @@ if createSequenceFile
     % create .seq file
     system('git clone --branch v1.5.0 git@github.com:pulseq/pulseq.git');
     addpath pulseq/matlab
-%    write2DGRE;   % writes .seq file, and sets pislquant
+    write2DGRE;   % writes .seq file, and sets pislquant
 
     % Convert .seq file to a PulCeq (Ceq) object
-    %system('git clone --branch tv7_dev git@github.com:HarmonizedMRI/PulCeq.git');
-    %addpath PulCeq/matlab
-    addpath ~/github/HarmonizedMRI/PulCeq/matlab
+    system('git clone --branch tv7_dev git@github.com:HarmonizedMRI/PulCeq.git');
+    addpath PulCeq/matlab
     ceq = seq2ceq('gre2d.seq');
 
     % Check the ceq object:
