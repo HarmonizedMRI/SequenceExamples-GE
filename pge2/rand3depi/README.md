@@ -4,6 +4,12 @@ Code for sequence generation and basic recon provided by Rex Fung (rexfung@umich
 
 This example is 3D Echo Planar Imaging (3D EPI).
 
+Dependencies:
+1. Pulseq: https://github.com/pulseq/pulseq.git
+2. TOPPE: https://github.com/toppeMRI/toppe.git
+3. PulCeq: https://github.com/HarmonizedMRI/PulCeq.git
+4. GE Orchestra (for reading ScanArchive files)
+
 Start by setting your experimental parameters in `params.m`.
 
 Then run `main.m`.
