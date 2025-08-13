@@ -6,7 +6,7 @@ This example is 3D Echo Planar Imaging (3D EPI).
 
 Dependencies:
 1. Pulseq: https://github.com/pulseq/pulseq.git
-2. TOPPE: https://github.com/toppeMRI/toppe.git
+2. TOPPE (v7/pge2): https://github.com/toppeMRI/toppe.git
 3. PulCeq: https://github.com/HarmonizedMRI/PulCeq.git
 4. GE Orchestra (for reading ScanArchive files)
 
