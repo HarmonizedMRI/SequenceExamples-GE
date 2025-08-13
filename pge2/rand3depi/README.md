@@ -14,8 +14,8 @@ Start by setting your experimental parameters in `params.m`.
 
 Then run `main.m`.
 It generates the following 3 `.seq` and `.pge` files:
-1. `randEPI`: 3D EPI sequence with optional random undersampling. There is no acceleration in this example.
-2. `EPIcal`: A short EPI sequence without phase encoding. Used to calibrate receiver gains and estimate phase difference between odd/even echoes.
+1. `EPIcal`: A short EPI sequence without phase encoding. Used to calibrate receiver gains and estimate phase difference between odd/even echoes.
+2. `randEPI`: 3D EPI sequence with optional random undersampling. There is no acceleration in this example. Run `EPIcal` before this, and just hit "manual prescan" and exit to use the existing receiver gains.
 3. `GRE`: GRE sequence for sensitivity map estimation.
 
 It also generates the following `.mat` files:
