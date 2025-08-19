@@ -9,6 +9,8 @@ Dependencies:
 2. TOPPE (v7/pge2): https://github.com/toppeMRI/toppe.git
 3. PulCeq: https://github.com/HarmonizedMRI/PulCeq.git
 4. GE Orchestra (for reading ScanArchive files)
+5. Harmonized MRI utils: https://github.com/HarmonizedMRI/utils.git
+6. MIRT: https://github.com/JeffFessler/mirt.git
 
 Start by setting your experimental parameters in `params.m`.
 
