@@ -11,6 +11,7 @@ Dependencies:
 4. GE Orchestra (for reading ScanArchive files)
 5. Harmonized MRI utils: https://github.com/HarmonizedMRI/utils.git
 6. MIRT: https://github.com/JeffFessler/mirt.git
+7. BART: https://github.com/mrirecon/bart.git
 
 Start by setting your experimental parameters in `params.m`.
 
