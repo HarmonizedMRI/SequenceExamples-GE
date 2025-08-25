@@ -20,6 +20,11 @@ Anyone is welcome to contribute sequence examples to this site.
 If you have a larger or more advanced Pulseq project to share, consider posting it on
 https://harmonizedmri.github.io/.
 
+To request access to the EPIC interpreter source code, 
+please fill out this
+[Google form](https://docs.google.com/forms/d/e/1FAIpQLSfzvbVp77zd8eOLx1h4vMTqKcdDXSoulg7mL_y_PB0bgX18sw/viewform?usp=sf_link).
+(If you do not receive a Github invite after a day or two, please contact jfnielse@umich.edu).
+
 [^1]: Nielsen JF, Noll DC. TOPPE: A framework for rapid prototyping of MR pulse sequences. Magn Reson Med. 2018 Jun;79(6):3128-3134. doi: 10.1002/mrm.26990.  
 
 [^2]: Layton KJ, Kroboth S, Jia F, Littin S, Yu H, Leupold J, Nielsen JF, Stöcker T, Zaitsev M. Pulseq: A rapid and hardware-independent pulse sequence prototyping framework. Magn Reson Med. 2017 Apr;77(4):1544-1552. doi: 10.1002/mrm.26235.
