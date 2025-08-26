@@ -32,9 +32,9 @@ Nvcoils = 10; % Chosen based on visual inspection of the "knee" in SVs
 % Filenames
 datdir = '/mnt/storage/rexfung/20250725ball/';
 fn_cal = strcat(datdir, 'cal.h5');
-fn_epi = strcat(datdir, 'randEPI_6x.h5');
+fn_epi = strcat(datdir, 'randEPI_8x.h5');
 fn_gre = strcat(datdir, 'gre.h5');
-fn_samp_log = strcat(datdir, 'samp_logs/6x.mat');
+fn_samp_log = strcat(datdir, 'samp_logs/8x.mat');
 fn_oe_locs = strcat(datdir, sprintf('samp_logs/kxoe%d.mat', Nx));
 fn_smaps = strcat(datdir, 'recon/smaps.mat');
 
