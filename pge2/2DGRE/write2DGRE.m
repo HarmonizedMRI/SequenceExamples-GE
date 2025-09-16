@@ -87,7 +87,11 @@ for iY = (-nDummyShots-pislquant+1):Ny
     % Mark start of segment (block group) by adding TRID label.
     % The TRID can be any integer, but must be unique to each segment.
     % Subsequent blocks in block group are NOT labelled.
-    seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
+    % The TRID label can belong to a block with zero or more other events.
+    seq.addBlock(mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
+    seq.addBlock(rf, gz);
+    % Alternative:
+    % seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
 
     % Slice-select refocus and readout prephasing
     % Set phase-encode gradients to zero while iY < 1
