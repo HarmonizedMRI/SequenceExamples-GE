@@ -109,11 +109,8 @@ for iY = (-nDummyShots-pislquant+1):Ny
     end
 
     % Spoil and PE rephasing, and TR delay
-    for tt = [40:8:90]*1e-6
-        seq.addBlock(mr.makeDelay(tt));  % fixed delay
-    end
     seq.addBlock(gxSpoil, mr.scaleGrad(gyPre, -pesc), gzSpoil);
-    seq.addBlock(mr.makeDelay(delayTR), mr.makeSoftDelay(1, 'dummy'));  % variable delay
+    seq.addBlock(mr.makeDelay(delayTR));
 end
 
 %% Check sequence timing
