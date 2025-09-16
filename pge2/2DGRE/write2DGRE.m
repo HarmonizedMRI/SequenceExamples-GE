@@ -25,7 +25,7 @@ Nx = 192; Ny = 192;                 %
 dwell = 20e-6;                      % ADC sample time (s)
 sliceThickness = 3e-3;              % slice thickness (m)
 alpha = 6;                          % flip angle (degrees)
-TR = 30e-3;                         % repetition time TR (s)
+TR = 25e-3;                         % repetition time TR (s)
 rfSpoilingInc = 117;                % RF spoiling increment
 
 t_pre = 1e-3; % duration of x pre-phaser
@@ -56,7 +56,8 @@ seq2.addBlock(rf, gz);
 seq2.addBlock(gxPre, gyPre, gzReph);
 seq2.addBlock(gx);
 seq2.addBlock(mr.scaleGrad(gx, -1));
-seq2.addBlock(gxSpoil, gyPre, gzSpoil);
+seq2.addBlock(gxSpoil, gyPre);
+seq2.addBlock(gzSpoil);
 delayTR = ceil((TR - seq2.duration)/seq.gradRasterTime)*seq.gradRasterTime;
 assert(delayTR > 100e-6, 'Requested TR is too short');
 
@@ -109,8 +110,12 @@ for iY = (-nDummyShots-pislquant+1):Ny
     end
 
     % Spoil and PE rephasing, and TR delay
-    seq.addBlock(gxSpoil, mr.scaleGrad(gyPre, -pesc), gzSpoil);
-    seq.addBlock(mr.makeDelay(delayTR));
+    % Shift z spoiler position using variable delays
+    seq.addBlock(gxSpoil, mr.scaleGrad(gyPre, -pesc));
+    dt = 40e-6*max(1,iY);
+    seq.addBlock(mr.makeDelay(dt));
+    seq.addBlock(gzSpoil);
+    seq.addBlock(mr.makeDelay(delayTR-dt));
 end
 
 %% Check sequence timing

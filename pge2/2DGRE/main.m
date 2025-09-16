@@ -13,8 +13,8 @@ if createSequenceFile
     % Convert .seq file to a PulCeq (Ceq) object
     %system('git clone --branch v2.4.1 git@github.com:HarmonizedMRI/PulCeq.git');
     system('git clone --branch tv7_dev git@github.com:HarmonizedMRI/PulCeq.git');
-    addpath PulCeq/matlab
-    %addpath ~/github/HarmonizedMRI/PulCeq/matlab
+    %addpath PulCeq/matlab
+    addpath ~/github/HarmonizedMRI/PulCeq/matlab
     ceq = seq2ceq([fn '.seq']);
 
     % Check the ceq object:
