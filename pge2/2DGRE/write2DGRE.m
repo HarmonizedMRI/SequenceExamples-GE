@@ -142,13 +142,11 @@ for flip = 10:10:180
     rf.signal = rf.signal * 180/flip;
 end
 
+%% Noise scan
 %seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique int
-%seq.addBlock(mr.makeDelay(1));
+%seq.addBlock(mr.makeDelay(1)); % gradient heating check hangs if this delay > 1s -- TODO
 %seq.addBlock(adc);
 %seq.addBlock(mr.makeDelay(1)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
-
-%%% Noise scan (no RF)
-
 
 
 %% Check sequence timing
