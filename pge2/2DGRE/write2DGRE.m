@@ -62,6 +62,7 @@ pislquant = 10;     % number of shots/ADC events used for receive gain calibrati
 rf_phase = 0;
 rf_inc = 0;
 
+TRisSet = false;
 for iY = (-nDummyShots-pislquant+1):Ny
     isDummyTR = iY <= -pislquant;
     isReceiveGainCalibrationTR = iY < 1 & iY > -pislquant;
@@ -114,6 +115,11 @@ for iY = (-nDummyShots-pislquant+1):Ny
     seq.addBlock(mr.makeDelay(dt));
     seq.addBlock(gzSpoil);
     seq.addBlock(mr.makeDelay(delayTR-dt));
+
+    if ~TRisSet
+        TR = seq.duration;
+        TRisSet = true;
+    end
 end
 
 %% Flip angle measurement scan:
