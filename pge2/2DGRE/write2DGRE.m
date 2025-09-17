@@ -23,9 +23,9 @@ seq = mr.Sequence(sys);
 fov = 240e-3; 
 Nx = 192; Ny = 192;                 % 
 dwell = 20e-6;                      % ADC sample time (s)
-sliceThickness = 3e-3;              % slice thickness (m)
+sliceThickness = 5e-3;              % slice thickness (m)
 alpha = 6;                          % flip angle (degrees)
-TR = 25e-3;                         % repetition time TR (s)
+delayTR = 5e-3;                     % for demonstrating variable delays
 rfSpoilingInc = 117;                % RF spoiling increment
 
 t_pre = 1e-3; % duration of x pre-phaser
@@ -50,18 +50,8 @@ peScales = phaseAreas/gyPre.area;
 gxSpoil = mr.makeTrapezoid('x', 'Area', 2*Nx*deltak, 'system', sys);
 gzSpoil = mr.makeTrapezoid('z', 'Area', 4/sliceThickness, 'system', sys);
 
-% Calculate delay to achieve desired TR
-seq2 = mr.Sequence(sys);
-seq2.addBlock(rf, gz);
-seq2.addBlock(gxPre, gyPre, gzReph);
-seq2.addBlock(gx);
-seq2.addBlock(mr.scaleGrad(gx, -1));
-seq2.addBlock(gxSpoil, gyPre);
-seq2.addBlock(gzSpoil);
-delayTR = ceil((TR - seq2.duration)/seq.gradRasterTime)*seq.gradRasterTime;
-assert(delayTR > 100e-6, 'Requested TR is too short');
 
-% Loop over phase encodes and define sequence blocks
+%% 2D GRE scan, dual-echo
 % iY <= -10        Dummy shots to reach steady state
 % -10 < iY <= 0    ADC is turned on and used for receive gain calibration on GE
 % iY > 0           Image acquisition
@@ -100,6 +90,10 @@ for iY = (-nDummyShots-pislquant+1):Ny
 
     seq.addBlock(gxPre, mr.scaleGrad(gyPre, pesc), gzReph);
 
+    % Empty blocks with a label is ok -- for now they are ignored by the GE interpreter
+    seq.addBlock(mr.makeLabel('SET','LIN', max(1,iY)) ) ;
+    seq.addBlock(mr.makeLabel('SET','AVG', 0));
+
     % Non-flyback 2-echo readout
     if isDummyTR
         seq.addBlock(gx);
@@ -116,11 +110,46 @@ for iY = (-nDummyShots-pislquant+1):Ny
     % Spoil and PE rephasing, and TR delay
     % Shift z spoiler position using variable delays
     seq.addBlock(gxSpoil, mr.scaleGrad(gyPre, -pesc));
-    dt = 40e-6*max(1,iY);
+    dt = 20e-6*max(1,iY);
     seq.addBlock(mr.makeDelay(dt));
     seq.addBlock(gzSpoil);
     seq.addBlock(mr.makeDelay(delayTR-dt));
 end
+
+%% Flip angle measurement scan:
+%% Excite with different flip angles and acquire FID
+%% (no spatial encoding)
+
+% Create 180-degree slice selection pulse and gradient
+[rf, gz] = mr.makeSincPulse(pi, 'Duration', 4e-3, ...
+    'SliceThickness', sliceThickness, 'apodization', 0.42, ...
+    'use', 'excitation', ...
+    'timeBwProduct', 4, 'system', sys);
+gzReph = mr.makeTrapezoid('z', 'Area', -gz.area/2, 'Duration', 1e-3, 'system', sys);
+
+for flip = 10:10:180
+    % set flip angle
+    rf.signal = rf.signal * flip/180 ;  
+
+    seq.addBlock(mr.makeLabel('SET', 'TRID', 47));  % any unique int
+    seq.addBlock(mr.makeDelay(5));   % for T1 recovery
+    seq.addBlock(rf, gz);
+    seq.addBlock(gzReph);
+    seq.addBlock(adc);
+    seq.addBlock(mr.makeDelay(400e-6)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
+
+    % reset flip angle
+    rf.signal = rf.signal * 180/flip;
+end
+
+%seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique int
+%seq.addBlock(mr.makeDelay(1));
+%seq.addBlock(adc);
+%seq.addBlock(mr.makeDelay(1)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
+
+%%% Noise scan (no RF)
+
+
 
 %% Check sequence timing
 [ok, error_report] = seq.checkTiming;
