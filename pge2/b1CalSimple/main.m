@@ -1,6 +1,6 @@
 % actions
-createSequenceFile = true;
-reconstruct = false;
+createSequenceFile = false;
+reconstruct = true;
 
 fn = 'flip';
 
@@ -46,53 +46,26 @@ if reconstruct
 
     archive = GERecon('Archive.Load', 'data.h5');
 
-    %% Load and display 2D GRE scan (both echoes)
+    FLIP = [90:-10:10 100:10:180];   % see writeflip.m
 
-    % skip past receive gain calibration TRs (pislquant)
-    for n = 1:pislquant
-        currentControl = GERecon('Archive.Next', archive);
-    end
-
-    % read first phase-encode of first echo
+    % read first view
     currentControl = GERecon('Archive.Next', archive);
     [nx1 nc] = size(currentControl.Data);
-    ny1 = nx1;
-    d1 = zeros(nx1, nc, ny1);
-    d1(:,:,1) = currentControl.Data;
-
-    % read first phase-encode of second echo
-    currentControl = GERecon('Archive.Next', archive);
-    [nx2 nc] = size(currentControl.Data);
-    d2 = zeros(nx2, nc, ny1);
-
-    for iy = 2:ny1
-        currentControl = GERecon('Archive.Next', archive);
-        d1(:,:,iy) = currentControl.Data;
-        currentControl = GERecon('Archive.Next', archive);
-        d2(:,:,iy) = currentControl.Data;
-    end
-
-    d1 = permute(d1, [1 3 2]);   % [nx1 nx1 nc]
-    d2 = permute(d2(:, :, end/2-nx2:end/2+nx2-1), [1 3 2]);   % [nx2 nx2 nc]
-
-    [~, im1] = toppe.utils.ift3(d1, 'type', '2d');
-    [~, im2] = toppe.utils.ift3(d2, 'type', '2d');
-
-    system('git clone --depth 1 git@github.com:JeffFessler/mirt.git');
-    cd mirt; setup; cd ..;
-
-    subplot(121); im(im1); title('echo 1 (192x192, dwell = 20us)');
-    subplot(122); im(im2); title('echo 2 (48x192, dwell = 40us)');
-
-    %% Load and display flip angle calibration scan
-    FLIP = 10:10:180;  % see write2DGRE.m
     d = zeros(nx1, nc, length(FLIP));
-    for ii = 1:length(FLIP)
+    d(:,:,1) = currentControl.Data;
+
+    % read the remaining views
+    for ii = 2:length(FLIP)
         currentControl = GERecon('Archive.Next', archive);
         d(:,:,ii) = currentControl.Data;
     end
+
+    %% Display 
     s = mean(abs(d),1);   % [1 nc 18]
     s = sqrt(sum(s.^2, 2));  % [1 1 18]
     s = squeeze(s);
+    plot(FLIP, s, 'o');
+    xlabel('Prescribed flip angle (degrees)');
+    ylabel('signal (a.u.)');
 end
 
