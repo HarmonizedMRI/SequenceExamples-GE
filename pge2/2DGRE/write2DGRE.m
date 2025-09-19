@@ -122,32 +122,6 @@ for iY = (-nDummyShots-pislquant+1):Ny
     end
 end
 
-%% Flip angle measurement scan:
-%% Excite with different flip angles and acquire FID
-%% (no spatial encoding)
-
-% Create 180-degree slice selection pulse and gradient
-[rf, gz] = mr.makeSincPulse(pi, 'Duration', 4e-3, ...
-    'SliceThickness', sliceThickness, 'apodization', 0.42, ...
-    'use', 'excitation', ...
-    'timeBwProduct', 4, 'system', sys);
-gzReph = mr.makeTrapezoid('z', 'Area', -gz.area/2, 'Duration', 1e-3, 'system', sys);
-
-for flip = 10:10:180
-    % set flip angle
-    rf.signal = rf.signal * flip/180 ;  
-
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 47));  % any unique int
-    seq.addBlock(mr.makeDelay(5));   % for T1 recovery
-    seq.addBlock(rf, gz);
-    seq.addBlock(gzReph);
-    seq.addBlock(adc);
-    seq.addBlock(mr.makeDelay(400e-6)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
-
-    % reset flip angle
-    rf.signal = rf.signal * 180/flip;
-end
-
 %% Noise scan
 %seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique int
 %seq.addBlock(mr.makeDelay(1)); % gradient heating check hangs if this delay > 1s -- TODO

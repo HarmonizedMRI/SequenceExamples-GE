@@ -2,7 +2,7 @@
 createSequenceFile = true;
 reconstruct = false;
 
-fn = 'gre2d';   % sequence name
+fn = 'gre2d';
 
 if createSequenceFile
     % create .seq file
@@ -12,10 +12,10 @@ if createSequenceFile
 
     % Convert .seq file to a PulCeq (Ceq) object
     %system('git clone --branch v2.4.1 git@github.com:HarmonizedMRI/PulCeq.git');
-    system('git clone --branch tv7_dev git@github.com:HarmonizedMRI/PulCeq.git');
+    %system('git clone --branch tv7_dev git@github.com:HarmonizedMRI/PulCeq.git');
     %system('git checkout 6bbc858502711dd46a4e5f7f84fb3a21faa9c8b8');
-    addpath PulCeq/matlab
-    %addpath ~/github/HarmonizedMRI/PulCeq/matlab
+    %addpath PulCeq/matlab
+    addpath ~/github/HarmonizedMRI/PulCeq/matlab
     ceq = seq2ceq([fn '.seq']);
 
     % Check the ceq object:
@@ -30,11 +30,11 @@ if createSequenceFile
     sys = pge2.getsys(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, gamma);
     %pge2.validate(ceq, sys);
 
-    pge2.plot(ceq, sys, 'timeRange', [1 1.2]);
+    pge2.plot(ceq, sys); %, 'timeRange', [1 1.2]);
 
     % Write ceq object to file.
     % pislquant is the number of ADC events used to set Rx gains in Auto Prescan
-    writeceq(ceq, [ fn '.pge'], 'pislquant', pislquant);
+    writeceq(ceq, [ fn '.pge'], 'pislquant', 2);
 end
 
 if reconstruct
@@ -44,6 +44,8 @@ if reconstruct
     addpath ~/Programs/orchestra-sdk-2.1-1.matlab/
 
     archive = GERecon('Archive.Load', 'data.h5');
+
+    %% Load and display 2D GRE scan (both echoes)
 
     % skip past receive gain calibration TRs (pislquant)
     for n = 1:pislquant
@@ -80,5 +82,6 @@ if reconstruct
 
     subplot(121); im(im1); title('echo 1 (192x192, dwell = 20us)');
     subplot(122); im(im2); title('echo 2 (48x192, dwell = 40us)');
+
 end
 
