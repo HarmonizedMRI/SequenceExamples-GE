@@ -41,11 +41,10 @@ for flip = [90:-10:10 100:10:180]  % start with 90 to maximimize signal during r
     rf.signal = rf.signal * flip/180 ;  
 
     seq.addBlock(mr.makeLabel('SET', 'TRID', 47));  % any unique int
-    seq.addBlock(mr.makeDelay(5));   % for T1 recovery
     seq.addBlock(rf, gz);
     seq.addBlock(gzReph);
     seq.addBlock(adc);
-    seq.addBlock(mr.makeDelay(400e-6)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
+    seq.addBlock(mr.makeDelay(5)); % for T1 recovery
 
     % reset flip angle
     rf.signal = rf.signal * 180/flip;
