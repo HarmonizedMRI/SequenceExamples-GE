@@ -11,11 +11,9 @@ if createSequenceFile
     write2DGRE;   % writes .seq file, and sets pislquant
 
     % Convert .seq file to a PulCeq (Ceq) object
-    %system('git clone --branch v2.4.1 git@github.com:HarmonizedMRI/PulCeq.git');
-    %system('git clone --branch tv7_dev git@github.com:HarmonizedMRI/PulCeq.git');
-    %system('git checkout 6bbc858502711dd46a4e5f7f84fb3a21faa9c8b8');
-    %addpath PulCeq/matlab
-    addpath ~/github/HarmonizedMRI/PulCeq/matlab
+    system('git clone --branch tv7_dev git@github.com:HarmonizedMRI/PulCeq.git');
+    addpath PulCeq/matlab
+    %addpath ~/github/HarmonizedMRI/PulCeq/matlab
     ceq = seq2ceq([fn '.seq']);
 
     % Check the ceq object:
@@ -28,9 +26,9 @@ if createSequenceFile
     slew_max = 20;         % Gauss/cm/ms
     gamma = 4.2576e3;      % Hz/Gauss
     sys = pge2.getsys(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, gamma);
-    %pge2.validate(ceq, sys);
+    pge2.validate(ceq, sys);
 
-    pge2.plot(ceq, sys); %, 'timeRange', [1 1.2]);
+    pge2.plot(ceq, sys, 'logical', true); %, 'timeRange', [1 1.2]);
 
     % Write ceq object to file.
     % pislquant is the number of ADC events used to set Rx gains in Auto Prescan

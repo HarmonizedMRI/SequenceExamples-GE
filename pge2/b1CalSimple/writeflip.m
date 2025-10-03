@@ -44,7 +44,7 @@ for flip = [90:-10:10 100:10:180]  % start with 90 to maximimize signal during r
     seq.addBlock(rf, gz);
     seq.addBlock(gzReph);
     seq.addBlock(adc);
-    seq.addBlock(mr.makeDelay(5)); % for T1 recovery
+    seq.addBlock(mr.makeDelay(3)); % for T1 recovery
 
     % reset flip angle
     rf.signal = rf.signal * 180/flip;

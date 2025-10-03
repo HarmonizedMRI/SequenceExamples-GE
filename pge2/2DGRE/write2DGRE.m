@@ -37,7 +37,8 @@ t_pre = 1e-3; % duration of x pre-phaser
     'timeBwProduct', 4, 'system', sys);
 gzReph = mr.makeTrapezoid('z', 'Area', -gz.area/2, 'Duration', t_pre, 'system', sys);
 
-% Define other gradients and ADC events
+% Define other gradients and ADC events.
+% Define them once, then scale amplitudes as needed in the scan loop.
 deltak = 1/fov;
 gx = mr.makeTrapezoid('x', 'FlatArea', Nx*deltak, 'FlatTime', Nx*dwell, 'system', sys);
 adc = mr.makeAdc(Nx, 'Duration', gx.flatTime, 'Delay', gx.riseTime, 'system', sys);
@@ -91,7 +92,8 @@ for iY = (-nDummyShots-pislquant+1):Ny
 
     seq.addBlock(gxPre, mr.scaleGrad(gyPre, pesc), gzReph);
 
-    % Empty blocks with a label is ok -- for now they are ignored by the GE interpreter
+    % Empty blocks with a label is ok -- for now they are ignored by the GE interpreter.
+    % These are just dummy examples to make the point.
     seq.addBlock(mr.makeLabel('SET','LIN', max(1,iY)) ) ;
     seq.addBlock(mr.makeLabel('SET','AVG', 0));
 
