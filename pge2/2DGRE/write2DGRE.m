@@ -125,10 +125,10 @@ for iY = (-nDummyShots-pislquant+1):Ny
 end
 
 %% Noise scan
-%seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique int
-%seq.addBlock(mr.makeDelay(1)); % gradient heating check hangs if this delay > 1s -- TODO
-%seq.addBlock(adc);
-%seq.addBlock(mr.makeDelay(1)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
+seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique int
+seq.addBlock(mr.makeDelay(1)); % gradient heating check hangs if this delay > 1s -- TODO
+seq.addBlock(adc);
+seq.addBlock(mr.makeDelay(1)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
 
 
 %% Check sequence timing
