@@ -28,7 +28,7 @@ if createSequenceFile
     sys = pge2.getsys(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, gamma);
     %pge2.validate(ceq, sys);
 
-    pge2.plot(ceq, sys, 'timeRange', 10 + [0 20e-3], 'logical', true);
+    %pge2.plot(ceq, sys, 'timeRange', 1 + [0 20e-3], 'logical', true);
 
     % Write ceq object to file.
     % pislquant is the number of ADC events used to set Rx gains in Auto Prescan
