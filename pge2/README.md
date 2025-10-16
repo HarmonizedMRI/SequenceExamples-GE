@@ -134,7 +134,6 @@ https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/
 
 The key points to keep in mind when creating a .seq file for the pge2 interpreter are summarized here.
 
-
 ### Define segments (block groups) by adding TRID labels
 
 As in tv6, we define a 'segment' as a consecutive sub-sequence of Pulseq blocks that are always executed together,
@@ -270,30 +269,37 @@ If this results in overlapping RF/ADC dead/ringdown times, you would then adjust
 by modifying the event delays and block durations when creating the .seq file.
 
 
-### Adding gradient rotation
 
-* Gradient rotations can be implemented 'by hand' by explicitly creating the gradient shapes and writing them into the .seq file,
-  or with the `mr.rotate()` or `mr.rotate3D()` functions  in the Pulseq toolbox. 
-  Note that `mr.rotate3D()` is in the 'dev' branch at the time of writing. 
-  These functions return a cell array of events that can be passed directly to `seq.addBlock()`.
-  When calling these functions, include all non-gradient events as well -- these will simply be passed on without change. 
-  For example:
-  ```
-  seq.addBlock(mr.rotate(gx, gy, adc, mr.makeDelay(0.1)));
-  ```
-  See also the following discussion: https://github.com/pulseq/pulseq/discussions/91
-* At present, each rotated waveform is stored as a separate shape in the .seq file, i.e., rotation information is not formally preserved in the .seq file.
-* During the seq2ceq.m step (part of the PulCeq toolbox), rotations are detected and written into the "Ceq" sequence structure.
-  This is necessary since the pge2 interpreter implements rotations more efficiently than explicit waveform shapes.
-* The rotation is applied to the **entire segment** as a whole.
-  In other words, the interpreter cannot rotate each block within a segment independently.
-  If a segment contains multiple blocks with different rotation matrices, **only the last** of the non-identity rotations are applied. 
-  If you find this to be the case, redesign the segment definitions to achieve the desired rotations.
+
+### Additional recommendations
+
+* **Pre-define events outside of the main loop in your .seq file creation script.**
+GE sequences are built on the idea that there is a small set of pre-defined RF/gradient events,
+that are repeating many times throughout the sequence but with (possibly) different amplitudes,
+phase offsets, or (gradient) rotation.
+It is therefore highly recommended to define events once, and then use mr.scaleGrad() to scale
+them as needed inside the main loop.
+
+* **Avoid scaling waveforms to exactly zero -- set to `eps` or a similarly small number instead.**
+This is recommended because the Pulseq toolbox may not recognize, e.g., a zero-amplitude trapezoid
+as exactly that, which is in conflict with the GE sequence model.
+
+* **Use rotation events,** rather than rotating gradients manually or using the older
+`mr.rotate` or `mr.rotate3D` functions (in the core Pulseq toolbox).
+Rotation events are a new feature in Pulseq, see https://github.com/pulseq/pulseq/discussions/117.
+**NB! The rotation is applied to the entire segment as a whole.**
+In other words, the interpreter cannot rotate each block within a segment independently.
+If a segment contains multiple blocks with different rotation matrices, **only the last** of the non-identity rotations are applied. 
+If you find this to be the case, redesign the segment definitions to achieve the desired rotations.
+
+* Check your sequence using **pge2.validate()**, and plot the Ceq object using
+**pge2.plot()**.
+This helps catch errors before simulating in WTools or scanning.
 
 
 ### Sequence timing: Summary and further comments
 
-* When loading a segment, the interpreter inserts a 116us dead time at the end of each segment.
+* When loading a segment, the interpreter inserts a 117us dead time at the end of each segment.
 * The parameters `rfDeadTime`, `rfRingdownTime`, and `adcDeadTime` were included in the Pulseq MATLAB toolbox
 with Siemens scanners in mind, and as just discussed, setting them to 0 can in fact be a preferred option in many cases for GE users.
 This is because the default behavior in the Pulseq toolbox is to quietly insert corresponding gaps at the 
