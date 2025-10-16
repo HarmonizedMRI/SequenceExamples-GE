@@ -280,8 +280,8 @@ phase offsets, or (gradient) rotation;
 these pre-defined events give rise to the base blocks described above.
 It is therefore highly recommended to define events once, and then use mr.scaleGrad() to scale
 them as needed inside the main loop.
-This ensures proper detection of the base blocks during the seq2ceq.m conversion stage.
-If creating independent events inside the main loop using repeated calls to, e.g., `mr.makeTrapezoid()`, the
+This ensures proper detection of the base blocks during the seq2ceq.m conversion stage;
+if creating independent events inside the main loop using repeated calls to, e.g., `mr.makeTrapezoid()`, the
 resulting trapezoids generally do not have identical shapes and are therefore not instances of a shared base block.
 
 * **Avoid setting waveform amplitudes to exactly zero -- instead, set to `eps` or a similarly small number.**
