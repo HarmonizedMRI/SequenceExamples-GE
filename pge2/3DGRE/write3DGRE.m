@@ -16,7 +16,7 @@ sys = mr.opts('MaxGrad', 22, 'GradUnit', 'mT/m',...
 
 % Acquisition parameters
 fov = [240e-3 240e-3 240e-3];   % FOV (m)
-Nx = 48; Ny = Nx; Nz = Nx;    % Matrix size
+Nx = 80; Ny = Nx; Nz = 80;    % Matrix size
 dwell = 10e-6;                  % ADC sample time (s)
 alpha = 5;                      % flip angle (degrees)
 alphaPulseDuration = 0.2e-3;
@@ -90,8 +90,8 @@ for iZ = -nDummyZLoops:Nz
     for iY = 1:Ny
         % Turn on y and z prephasing lobes, except during dummy scans and
         % receive gain calibration (auto prescan)
-        yStep = (iZ > 0) * pe1Steps(iY);
-        zStep = (iZ > 0) * pe2Steps(max(1,iZ));
+        yStep = (iZ > 0) * pe1Steps(iY) + eps;
+        zStep = (iZ > 0) * pe2Steps(max(1,iZ)) + eps;
 
         % Update RF phase
         rf.phaseOffset = rf_phase/180*pi;
@@ -100,10 +100,10 @@ for iZ = -nDummyZLoops:Nz
         rf_phase = mod(rf_phase+rf_inc, 360.0);
         
         % Mark start of segment (block group) by adding TRID label
-        seq.addBlock(rf, mr.makeLabel('SET', 'TRID', 2-isDummyTR));
+        seq.addBlock(mr.makeLabel('SET', 'TRID', 2-isDummyTR));
 
         % Excitation
-%        seq.addBlock(rf);
+        seq.addBlock(rf);
         
         % Encoding
         seq.addBlock(gxPre, ...
@@ -142,7 +142,7 @@ seq.write('gre3d.seq');
 
 % Plot sequence
 Noffset = Ny*(nDummyZLoops+1);
-seq.plot('timerange',[Noffset Noffset+4]*TR, 'timedisp', 'ms');
+%seq.plot('timerange',[Noffset Noffset+4]*TR, 'timedisp', 'ms');
 
 return
 
