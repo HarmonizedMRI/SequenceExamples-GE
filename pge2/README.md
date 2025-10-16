@@ -151,7 +151,7 @@ A pulse sequence typically contains multiple instances of any given virtual segm
 
 In pratice, this means that you must **mark the beginning of each segment in the sequence with the TRID label** in the Pulseq toolbox.
 Example:
-```
+```matlab
 inversionVirtualSegmentID = 4;  % any unique integer, in no particular order
 imagingVirtualSegmentID = 2;
 
@@ -235,7 +235,7 @@ and it is perfectly ok to override that behavior to make the sequence more time-
 See the `sys` struct example next.
 
 **Examples:**
-```
+```matlab
 sys = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
               'maxSlew', 180, 'slewUnit', 'T/m/s', ...
               'rfDeadTime', 100e-6, ...
@@ -253,7 +253,7 @@ to turn on/off RF and ADC events.
 This is because the block boundaries 'disappear' inside a segment.
 If you know this to be the case, you may want to try the following, more time-efficient, alternative:
 
-```
+```matlab
 sys = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
               'maxSlew', 180, 'slewUnit', 'T/m/s', ...
               'rfDeadTime', 0, ...
