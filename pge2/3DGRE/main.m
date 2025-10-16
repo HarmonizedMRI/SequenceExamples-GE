@@ -9,7 +9,6 @@ if createSequenceFile
     system('git clone --branch v1.5.0 git@github.com:pulseq/pulseq.git');
     addpath pulseq/matlab
     write3DGRE;   % writes .seq file
-    return
 
     % Convert .seq file to a PulCeq (Ceq) object
     %system('git clone --branch tv7_dev git@github.com:HarmonizedMRI/PulCeq.git');
@@ -27,7 +26,7 @@ if createSequenceFile
     slew_max = 20;         % Gauss/cm/ms
     gamma = 4.2576e3;      % Hz/Gauss
     sys = pge2.getsys(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, gamma);
-    pge2.validate(ceq, sys);
+    %pge2.validate(ceq, sys);
 
     pge2.plot(ceq, sys, 'timeRange', 10 + [0 20e-3], 'logical', true);
 

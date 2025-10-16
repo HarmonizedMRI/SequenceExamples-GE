@@ -3,20 +3,21 @@
 % 3D GRE demo sequence for Pulseq on GE v1.0 User Guide
 
 % System/design parameters.
-sys = mr.opts('maxGrad', 22, 'gradUnit','mT/m', ...
-              'maxSlew', 150, 'slewUnit', 'T/m/s', ...
-              'rfDeadTime', 100e-6, ...
-              'rfRingdownTime', 60e-6, ...
-              'adcDeadTime', 40e-6, ...
-              'adcRasterTime', 2e-6, ...
-              'gradRasterTime', 10e-6, ...
-              'blockDurationRaster', 10e-6, ...
-              'B0', 3.0);
+sys = mr.opts('MaxGrad', 22, 'GradUnit', 'mT/m',...
+    'MaxSlew', 150, 'SlewUnit', 'T/m/s',...
+    'rfDeadTime', 100e-6, ...
+    'rfRingdownTime', 60e-6, ...
+    'adcRasterTime', 2e-6, ...
+    'gradRasterTime', 4e-6, ...
+    'rfRasterTime', 4e-6, ...
+    'blockDurationRaster', 4e-6, ...
+    'B0', 3, ...
+    'adcSamplesDivisor', 2, ...   % 4 on Siemens; 1 on GE
+    'adcDeadTime', 40e-6); % , 'adcSamplesLimit', 8192); 
 
 % Acquisition parameters
 fov = [240e-3 240e-3 240e-3];   % FOV (m)
-Nx = 80; Ny = Nx; Nz = 80;    % Matrix size
-TR = 10e-3;                     % sec
+Nx = 48; Ny = Nx; Nz = Nx;    % Matrix size
 dwell = 10e-6;                  % ADC sample time (s)
 alpha = 5;                      % flip angle (degrees)
 alphaPulseDuration = 0.2e-3;
@@ -58,7 +59,7 @@ adc = mr.makeAdc(Nx, sys, ...
 gxtmp2 = mr.makeTrapezoid('x', sys, ...  % temporary object
     'Amplitude', Nx*deltak(1)/Tread, ...
     'FlatTime', Tread + adc.deadTime);   
-[gx, ~] = mr.splitGradientAt(gxtmp2, gxtmp2.riseTime + gxtmp2.flatTime);
+[gx, ~] = mr.splitGradientAt(gxtmp2, gxtmp2.riseTime + gxtmp2.flatTime, 'system', sys);
 
 gzSpoil = mr.makeTrapezoid('z', sys, ...
     'Area', Nx*deltak(1)*nCyclesSpoil);
@@ -67,11 +68,6 @@ gxSpoil = mr.makeExtendedTrapezoidArea('x', gxtmp.amplitude, 0, gzSpoil.area, sy
 % y/z PE steps
 pe1Steps = ((0:Ny-1)-Ny/2)/Ny*2;
 pe2Steps = ((0:Nz-1)-Nz/2)/Nz*2;
-
-% Calculate TR delay
-TRmin = mr.calcDuration(rf) + mr.calcDuration(gxPre) ...
-   + mr.calcDuration(gx) + mr.calcDuration(gxSpoil);
-delayTR = TR - TRmin;
 
 % Loop over phase encodes and define sequence blocks
 % iZ < 0: Dummy shots to reach steady state
@@ -98,16 +94,17 @@ for iZ = -nDummyZLoops:Nz
         yStep = (iZ > 0) * pe1Steps(iY);
         zStep = (iZ > 0) * pe2Steps(max(1,iZ));
 
-        % RF spoiling
+        % Update RF phase
         rf.phaseOffset = rf_phase/180*pi;
         adc.phaseOffset = rf_phase/180*pi;
         rf_inc = mod(rf_inc+rfSpoilingInc, 360.0);
         rf_phase = mod(rf_phase+rf_inc, 360.0);
         
-        % Excitation
-        % Mark start of segment (block group) by adding label.
-        % Subsequent blocks in block group are NOT labelled.
+        % Mark start of segment (block group) by adding TRID label
         seq.addBlock(rf, mr.makeLabel('SET', 'TRID', 2-isDummyTR));
+
+        % Excitation
+%        seq.addBlock(rf);
         
         % Encoding
         seq.addBlock(gxPre, ...
@@ -119,11 +116,10 @@ for iZ = -nDummyZLoops:Nz
             seq.addBlock(gx, adc);
         end
 
-        % rephasing/spoiling and TR delay
+        % rephasing/spoiling
         seq.addBlock(gxSpoil, ...
             mr.scaleGrad(gyPre, -yStep), ...
             mr.scaleGrad(gzPre, -zStep));
-        seq.addBlock(mr.makeDelay(delayTR));
     end
 end
 fprintf('Sequence ready\n');
