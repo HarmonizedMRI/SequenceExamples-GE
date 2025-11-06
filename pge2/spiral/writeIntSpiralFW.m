@@ -32,15 +32,15 @@ seq = mr.Sequence(sys);          % Create a new sequence object
 warning('OFF', 'mr:restoreShape'); % restore shape is not compatible with spirals and will throw a warning from each plot() or calcKspace() call
 
 % Create 90 degree slice selection pulse and gradient
-[rf, gz] = mr.makeSincPulse(pi/2,'system',sys,'Duration',3e-3,...
+[rf, gz] = mr.makeSincPulse(pi/2,'system',sys,'Duration',2e-3,...
     'use', 'excitation', ...
     'SliceThickness',sliceThickness,'apodization',0.5,'timeBwProduct',4,'system',sys);
 gzReph = mr.makeTrapezoid('z',sys,'Area',-gz.area/2,'system',sys);
 
 % define k-space parameters
 res=fov/mtx;        % [m]
-Gmax=0.030;         % [T/m]
-Smax=120;           % [T/(m*s)]
+%Gmax=0.030;         % [T/m]
+%Smax=130;           % [T/(m*s)]
 BW=125e3;           % [Hz]
 dt=1/(2*BW);        % [s]
 [k,g,s,time,r,theta]=vds(Smax*1e2,Gmax*1e2,dt,Nint,[fov*1e2,0],1/(2*res*1e2));
@@ -76,7 +76,8 @@ for iint=1:Nint
     rf.freqOffset = 0; %gz.amplitude*sliceThickness*(s-1-(Nslices-1)/2);
 
     % seq.addBlock(rf_fs,gz_fs, mr.makeLabel('SET', 'TRID', 1)); % fat-sat      % adding the TRID label needed by the GE interpreter
-    seq.addBlock(rf, gz,mr.makeLabel('SET', 'TRID', 1));
+    seq.addBlock(mr.makeLabel('SET', 'TRID', 1));
+    seq.addBlock(rf, gz);
     seq.addBlock(gzReph);
 
     % rotated spiral leaf
@@ -84,10 +85,11 @@ for iint=1:Nint
     irot = angle(exp(1i*irot)); % wrap to [-pi pi] range
     rot = mr.makeRotation([0 0 1], irot);  % rotation event. axis-angle notation
     seq.addBlock(gx,gy,adc,rot);
+    %seq.addBlock(mr.scaleGrad(gx, iint/Nint),gy,adc,rot);
 
-    % Spoil, and extend TR to allow T1 relaxation
-    % Avoid pure delay block here so that the gradient heating check in GE interpreter is accurate? No longer true I think but check. TODO
-    seq.addBlock(gz_spoil, mr.makeDelay(0.001)); 
+    % Spoil, and extend TR
+    seq.addBlock(gz_spoil);
+    seq.addBlock(mr.makeDelay(0.002)); 
 end
 
 % check whether the timing of the sequence is correct
