@@ -1,8 +1,8 @@
 % actions
-createSequenceFile = true;
-reconstruct = false;
+createSequenceFile = false;
+reconstruct = true;
 
-fn = 'gre2d';
+fn = 'gre2d';       % Pulseq file name (without the .seq extension)
 
 pislquant = 10;     % number of shots/ADC events used for receive gain calibration
 
@@ -48,14 +48,12 @@ if createSequenceFile
 end
 
 if reconstruct
-    system('git clone --depth 1 --branch v1.9.0 git@github.com:toppeMRI/toppe.git');
-    addpath toppe
-
-    addpath ~/Programs/orchestra-sdk-2.1-1.matlab/
-
-    archive = GERecon('Archive.Load', 'data.h5');
 
     %% Load and display 2D GRE scan (both echoes)
+
+    % Recall that the two echoes are interleaved
+
+    archive = GERecon('Archive.Load', 'data.h5');
 
     % skip past receive gain calibration TRs (pislquant)
     for n = 1:pislquant
@@ -74,6 +72,7 @@ if reconstruct
     [nx2 nc] = size(currentControl.Data);
     d2 = zeros(nx2, nc, ny1);
 
+    % read the remaining echoes
     for iy = 2:ny1
         currentControl = GERecon('Archive.Next', archive);
         d1(:,:,iy) = currentControl.Data;
@@ -81,14 +80,12 @@ if reconstruct
         d2(:,:,iy) = currentControl.Data;
     end
 
+    % do inverse fft and display
     d1 = permute(d1, [1 3 2]);   % [nx1 nx1 nc]
     d2 = permute(d2(:, :, end/2-nx2:end/2+nx2-1), [1 3 2]);   % [nx2 nx2 nc]
 
     [~, im1] = toppe.utils.ift3(d1, 'type', '2d');
     [~, im2] = toppe.utils.ift3(d2, 'type', '2d');
-
-    system('git clone --depth 1 git@github.com:JeffFessler/mirt.git');
-    cd mirt; setup; cd ..;
 
     subplot(121); im(im1); title('echo 1 (192x192, dwell = 20us)');
     subplot(122); im(im2); title('echo 2 (48x192, dwell = 40us)');

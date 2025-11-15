@@ -13,7 +13,7 @@
 %        whose duration varies dynamically as specified in the ceq.loop array.
 %    It is good to be aware of the difference, since the present of WAIT pulses
 %    can potentially interfere with other Pulseq events (RF and ADC).
-%  - empty segments consisting of nothing but a (constant or variable) delay
+%  - 'noise scans': segments consisting of nothing but an ADC event and delays 
 
 % System/design parameters.
 % These do not have to match the actual hardware limits.
@@ -138,12 +138,14 @@ for iY = (-nDummyShots-pislquant+1):Ny
     end
 end
 
-%% Noise scan
-seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique int
-seq.addBlock(mr.makeDelay(1)); % gradient heating check hangs if this delay > 1s -- TODO
-seq.addBlock(adc);
-seq.addBlock(mr.makeDelay(1)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
-
+%% Noise scans
+nNoiseScans = 5;
+for s = 1:nNoiseScans
+    seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique int
+    seq.addBlock(mr.makeDelay(1)); 
+    seq.addBlock(adc);
+    seq.addBlock(mr.makeDelay(500e-6)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
+end
 
 %% Check sequence timing
 [ok, error_report] = seq.checkTiming;

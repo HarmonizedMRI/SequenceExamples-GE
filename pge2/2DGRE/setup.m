@@ -9,3 +9,11 @@ addpath ~/github/HarmonizedMRI/PulCeq/matlab
 
 curdir = pwd; cd ~/github/mirt; setup; cd(curdir);
 
+system('git clone --depth 1 --branch v1.9.0 git@github.com:toppeMRI/toppe.git');
+addpath toppe
+
+system('git clone --depth 1 git@github.com:JeffFessler/mirt.git');
+cd mirt; setup; cd ..;
+
+% You can download the Orchestra toolbox from http://weconnect.gehealthcare.com/
+addpath ~/Programs/orchestra-sdk-2.1-1.matlab/
