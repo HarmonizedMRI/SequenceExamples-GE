@@ -1,6 +1,6 @@
 % actions
-createSequenceFile = false;
-reconstruct = true;
+createSequenceFile = true;
+reconstruct = false;
 
 fn = 'gre2d';       % Pulseq file name (without the .seq extension)
 
@@ -14,8 +14,10 @@ if createSequenceFile
     % Convert .seq file to a Ceq object
     ceq = seq2ceq([fn '.seq']);   %, 'usesRotationEvents', false);
 
-    % Check the Ceq object.
-    % First define hardware parameters
+    % Check to see if the ceq object is compatible with your scanner,
+    % with respect to PNS, low-level timing, and b1/gradient limits.
+    % Other checks such as gradient heating and RF checks (SAR and hardware) 
+    % are done by the interpreter at scan time.
     psd_rf_wait = 100e-6;   % RF-gradient delay, scanner specific (s)
     psd_grd_wait = 100e-6;  % ADC-gradient delay, scanner specific (s)
     b1_max = 0.25;          % Gauss
@@ -23,25 +25,30 @@ if createSequenceFile
     slew_max = 20;          % Gauss/cm/ms
     coil = 'xrm';           % 'hrmbuhp' (UHP); 'xrm' (MR750); ...
     sysGE = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, coil);
-
-    % Check PNS and b1/gradient limits
-    pars = pge2.check(ceq, sysGE);
-
-    % Plot the beginning of the sequence
-    S = pge2.plot(ceq, sysGE, 'timeRange', [0 0.02], 'rotate', false); 
+    pge2.check(ceq, sysGE);   % Checks PNS, low-level timing, and b1/gradient limits
 
     % Write ceq object to file.
     % pislquant is the number of ADC events used to set Rx gains in Auto Prescan
     writeceq(ceq, [ fn '.pge'], 'pislquant', pislquant);
 
-    % After simulating in WTools/VM or scanning, grab the xml files 
-    % and compare with the seq object:
-    warning('OFF', 'mr:restoreShape');  % turn off Pulseq warning for spirals
-    xmlPath = '~/transfer/xml/';
+    %% The .pge file just created is probably playable on your scanner,
+    %% but the following examples illustrate additional checks 
+    %% that are highly recommended.
+
+    % Visually inspect the ceq sequence
+    S = pge2.plot(ceq, sysGE, 'blockRange', [1 2], 'rotate', false, 'interpolate', false); 
+    S = pge2.plot(ceq, sysGE, 'timeRange', [0 0.02], 'rotate', true);
+
+    % Check accuracy of the ceq sequence representation against the original .seq file
     seq = mr.Sequence();
     seq.read([fn '.seq']);
-    % Then execute the following command:
-    % pge2.validate(ceq, sysGE, seq, xmlPath, 'row', [], 'plot', true);
+    pge2.validate(ceq, sysGE, seq, [], 'row', [], 'plot', false);  % cycle through all segment instance and stop if a mismatch is found
+    pge2.validate(ceq, sysGE, seq, [], 'row', [], 'plot', true);  % plot each segment instance before checking the next
+    pge2.validate(ceq, sysGE, seq, [], 'row', 1000, 'plot', true);  % check the segment instance at/after block 1000
+
+    % Check accuracy of the WTools/VM output against the original .seq file.
+    xmlPath = '~/transfer/xml/';  % the same files used by GE's Pulse View sequence plotter
+    pge2.validate(ceq, sysGE, seq, xmlPath, 'row', [], 'plot', true);
 
     % Coming soon: Check mechanical resonsances (forbidden frequency bands)
     % S = pge2.plot(ceq, sysGE, 'blockRange', [1 10], 'rotate', true, 'interpolate', true);
