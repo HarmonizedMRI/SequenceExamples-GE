@@ -7,10 +7,9 @@
 
 ## News (updated Nov 2025)
 
-The EPIC source code will from now on be hosted by GE at
-
-The pge2 interpreter is available here: https://github.com/GEHC-External/pulseq-ge-interpreter 
-
+The pge2 interpreter EPIC source code will from now on be hosted by GE at
+https://github.com/GEHC-External/pulseq-ge-interpreter.
+For access, please contact your GE representative.
 
 
 ## Overview and getting started
@@ -62,18 +61,24 @@ PulCeq is available here: https://github.com/HarmonizedMRI/PulCeq/releases
 The pge2 interpreter is available here: https://github.com/GEHC-External/pulseq-ge-interpreter 
 
 Beginning with v2.5.2.0, the version numbers of PulCeq and pge will match.
+
 The version number scheme is:
 ```
 v2.<major>.<minor>.<patch>
 
-<major>    Backward-incompatible changes
-<minor>    Backward-compatible changes and new features
-<pathcn>   minor changes and bug fixes (no new features)
+<major>    Backward-incompatible changes, e.g., to the .pge file format
+<minor>    Backward-compatible feature additions, e.g., functions for sequence display/checks
+<pathc>    minor changes and bug fixes 
 ```
+
+For example, if using pge2 interprever v2.5.2.0, the recommended PulCeq version is v.2.5.2.0 
+but any version v2.5.x.y should produce a .pge file that can be executed by the interpreter.
+
+Version history:
 
 | pge2 (tv7) | Compatible with:   | Comments |
 | ---------- | ------------------ | -------- |
-| [v2.5.2.1](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.2.0) | [PulCeq v2.5.2.0](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.5.2.0) | new checks; rotation event support|
+| [v2.5.2.1](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.2.0) | [PulCeq v2.5.2.x](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.5.2.0) | (latest) new checks; rotation event support|
 | [v2.5.0-beta3](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta3) | [PulCeq v2.4.1](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.1) | Added MP26 support. |
 | [v2.5.0-beta2](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta2) | [PulCeq v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) | DV26 support. Bug fixes. |
 | [v2.5.0-beta](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta) | [PulCeq v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) | Allow segments without gradients to pass heating check. |
