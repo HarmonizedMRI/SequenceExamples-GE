@@ -84,8 +84,8 @@ if reconstruct
     d1 = permute(d1, [1 3 2]);   % [nx1 nx1 nc]
     d2 = permute(d2(:, :, end/2-nx2:end/2+nx2-1), [1 3 2]);   % [nx2 nx2 nc]
 
-    [~, im1] = toppe.utils.ift3(d1, 'type', '2d');
-    [~, im2] = toppe.utils.ift3(d2, 'type', '2d');
+    [~, im1] = ift3(d1, 'type', '2d');
+    [~, im2] = ift3(d2, 'type', '2d');
 
     subplot(121); im(im1); title('echo 1 (192x192, dwell = 20us)');
     subplot(122); im(im2); title('echo 2 (48x192, dwell = 40us)');
