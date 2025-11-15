@@ -4,35 +4,47 @@ reconstruct = false;
 
 fn = 'gre2d';
 
+pislquant = 10;     % number of shots/ADC events used for receive gain calibration
+
 if createSequenceFile
-    % create .seq file
-    system('git clone --branch v1.5.0 git@github.com:pulseq/pulseq.git');
-    addpath pulseq/matlab
-    write2DGRE;   % writes .seq file, and sets pislquant
 
-    % Convert .seq file to a PulCeq (Ceq) object
-    system('git clone --branch tv7_dev git@github.com:HarmonizedMRI/PulCeq.git');
-    addpath PulCeq/matlab
-    %addpath ~/github/HarmonizedMRI/PulCeq/matlab
-    ceq = seq2ceq([fn '.seq']);
+    % Write the .seq file
+    write2DGRE;
 
-    % Check the ceq object:
-    % Define hardware parameters, and
-    % check if 'ceq' is compatible with the parameters in 'sys'
-    psd_rf_wait = 58e-6;  % RF-gradient delay, scanner specific (s)
-    psd_grd_wait = 60e-6; % ADC-gradient delay, scanner specific (s)
-    b1_max = 0.25;         % Gauss
-    g_max = 5;             % Gauss/cm
-    slew_max = 20;         % Gauss/cm/ms
-    gamma = 4.2576e3;      % Hz/Gauss
-    sys = pge2.getsys(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, gamma);
-    pge2.validate(ceq, sys);
+    % Convert .seq file to a Ceq object
+    ceq = seq2ceq([fn '.seq']);   %, 'usesRotationEvents', false);
 
-    pge2.plot(ceq, sys, 'timeRange', [1 1.05], 'logical', true);
+    % Check the Ceq object.
+    % First define hardware parameters
+    psd_rf_wait = 100e-6;   % RF-gradient delay, scanner specific (s)
+    psd_grd_wait = 100e-6;  % ADC-gradient delay, scanner specific (s)
+    b1_max = 0.25;          % Gauss
+    g_max = 5;              % Gauss/cm
+    slew_max = 20;          % Gauss/cm/ms
+    coil = 'xrm';           % 'hrmbuhp' (UHP); 'xrm' (MR750); ...
+    sysGE = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, coil);
+
+    % Check PNS and b1/gradient limits
+    pars = pge2.check(ceq, sysGE);
+
+    % Plot the beginning of the sequence
+    S = pge2.plot(ceq, sysGE, 'timeRange', [0 0.02], 'rotate', false); 
 
     % Write ceq object to file.
     % pislquant is the number of ADC events used to set Rx gains in Auto Prescan
-    writeceq(ceq, [ fn '.pge'], 'pislquant', 10);
+    writeceq(ceq, [ fn '.pge'], 'pislquant', pislquant);
+
+    % After simulating in WTools/VM or scanning, grab the xml files 
+    % and compare with the seq object:
+    warning('OFF', 'mr:restoreShape');  % turn off Pulseq warning for spirals
+    xmlPath = '~/transfer/xml/';
+    seq = mr.Sequence();
+    seq.read([fn '.seq']);
+    % Then execute the following command:
+    % pge2.validate(ceq, sysGE, seq, xmlPath, 'row', [], 'plot', true);
+
+    % Coming soon: Check mechanical resonsances (forbidden frequency bands)
+    % S = pge2.plot(ceq, sysGE, 'blockRange', [1 10], 'rotate', true, 'interpolate', true);
 end
 
 if reconstruct

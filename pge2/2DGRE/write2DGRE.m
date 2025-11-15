@@ -1,7 +1,22 @@
 % write2DGRE.m
-% 2D RF-spoiled sequence. Acquires two echoes with different bandwidth and resolution.
+% 2D RF-spoiled sequence
+%
+% Demonstrates the following:
+%  - two different ADC events with different bandwidth and resolution
+%  - empty blocks (zero duration) containing nothing but a (TRID) label
+%  - two kinds of delay blocks: 
+%    (1) those with constant duration throughout the scan. 
+%        The pge2 interpreter implements these by simply 
+%        moving the time marker within the segment.
+%    (2) those with variable duration throughout the scan. 
+%        The pge2 interpreter implements these by creating a WAIT pulse
+%        whose duration varies dynamically as specified in the ceq.loop array.
+%    It is good to be aware of the difference, since the present of WAIT pulses
+%    can potentially interfere with other Pulseq events (RF and ADC).
+%  - empty segments consisting of nothing but a (constant or variable) delay
 
 % System/design parameters.
+% These do not have to match the actual hardware limits.
 % Reduce gradients by 1/sqrt(3) to allow for oblique scans.
 % Reduce slew a bit further to reduce PNS.
 sys = mr.opts('maxGrad', 50/sqrt(3), 'gradUnit','mT/m', ...
@@ -10,8 +25,8 @@ sys = mr.opts('maxGrad', 50/sqrt(3), 'gradUnit','mT/m', ...
               'rfRingdownTime', 60e-6, ...
               'adcDeadTime', 40e-6, ...
               'adcRasterTime', 2e-6, ...
-              'rfRasterTime', 2e-6, ...
-              'gradRasterTime', 4e-6, ...
+              'rfRasterTime', 4e-6, ...  % must be integer multiple of 2us
+              'gradRasterTime', 4e-6, ...  
               'blockDurationRaster', 4e-6, ...
               'B0', 3.0);
 
@@ -58,7 +73,6 @@ gzSpoil = mr.makeTrapezoid('z', 'Area', 4/sliceThickness, 'system', sys);
 % iY > 0           Image acquisition
 
 nDummyShots = 20;  % shots to reach steady state
-pislquant = 10;     % number of shots/ADC events used for receive gain calibration
 
 rf_phase = 0;
 rf_inc = 0;
@@ -111,7 +125,7 @@ for iY = (-nDummyShots-pislquant+1):Ny
     end
 
     % Spoil and PE rephasing, and TR delay
-    % Shift z spoiler position using variable delays
+    % Shift z spoiler position using variable delays, for fun
     seq.addBlock(gxSpoil, mr.scaleGrad(gyPre, -pesc));
     dt = 20e-6*max(1,iY);
     seq.addBlock(mr.makeDelay(dt));
@@ -143,8 +157,8 @@ end
 
 %% Output for execution and plot
 seq.setDefinition('FOV', [fov fov sliceThickness]);
-seq.setDefinition('Name', 'gre2d');
-seq.write('gre2d.seq')       % Write to pulseq file
+seq.setDefinition('Name', fn);
+seq.write([fn '.seq'])       % Write to pulseq file
 
 seq.plot('timeRange', [0 3]*TR);
 
