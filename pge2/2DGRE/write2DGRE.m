@@ -1,5 +1,9 @@
 % write2DGRE.m
 %
+% 'Official' demo/learning sequence for Pulseq on GE 
+% using the community-developed pge2 interpreter.
+% Please inspect this file carefully, and your feedback is welcome!
+%
 % Demonstrates the following:
 %  - good coding practices for writing a Pulseq sequence in a GE-friendly way
 %  - two different ADC events with different bandwidth and resolution
