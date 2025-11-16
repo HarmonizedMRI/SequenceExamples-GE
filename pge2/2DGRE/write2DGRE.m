@@ -61,6 +61,7 @@ t_pre = 1e-3; % duration of x pre-phaser
     'use', 'excitation', ...
     'timeBwProduct', 4, 'system', sys);
 gzReph = mr.makeTrapezoid('z', 'Area', -gz.area/2, 'Duration', t_pre, 'system', sys);
+% TODO: replace with arbitrary gradient to demonstrate setting b1 amplitude correctly
 
 % Define other gradients and ADC events.
 % Define them once here, then scale amplitudes as needed in the scan loop.
