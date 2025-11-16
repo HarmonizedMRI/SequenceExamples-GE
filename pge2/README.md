@@ -2,11 +2,14 @@
 
 **Table of Contents**  
 [Overview and getting started](#overview-and-getting-started)  
-[Software releases](#software-releases)  
 [Creating the .seq file](#creating-the-pulseq-file)  
-[Executing the pge file on the scanner](#executing-the-pge-file-on-the-scanner)  
 [Safety management](#safety-management)  
 
+## News (updated Nov 2025)
+
+The pge2 interpreter EPIC source code will from now on be hosted by GE at
+https://github.com/GEHC-External/pulseq-ge-interpreter.
+For access, please contact your GE representative.
 
 
 ## Overview and getting started
@@ -24,110 +27,64 @@ The information on this page is designed to guide you in creating robust Pulseq 
 
 It is recommended to first simulate the sequence in the GE simulator (WTools),
 which helps to identify most potential issues before going to the scanner.
-Instructions are available here: https://github.com/jfnielsen/TOPPEpsdSourceCode/tree/UserGuide/v7.
+The simulator output (xml files) can be compared directly with the original .seq file using the `pge2.validate()` function,
+to ensure correct executation.
 
 
 ### Workflow 
 
-To execute a Pulseq (.seq) file using the pge2 GE interpreter:
+To execute a .seq file on GE, it must first be converted to a `.pge` file.
+For the most up to date implementation of the following steps, 
+see the [2DGRE](./2DGRE/) example in this folder.
 
 1. Create the .seq file more or less as one usually does, but see the information below about adding TRID labels and other considerations.
 
-2. Convert the .seq file to a PulCeq sequence object. In MATLAB, do:
-    ```matlab
-    system('git clone --branch v2.4.1 git@github.com:HarmonizedMRI/PulCeq.git');
-    addpath PulCeq/matlab
-    ceq = seq2ceq('gre2d.seq');
-    ```
-    NB! Make sure the versions of the PulCeq MATLAB toolbox and the pge2 interpreter are compatible -- see below.
+2. Convert the .seq file to a PulCeq sequence object (`ceq`). 
+   NB! Make sure the versions of the PulCeq MATLAB toolbox and the pge2 interpreter are compatible -- see below.
 
-3. Check sequence timing with `pge2.validate()` (optional)
-    ```matlab
-    % Define hardware parameters
-    psd_rf_wait = 150e-6;  % RF-gradient delay, scanner specific (s)
-    psd_grd_wait = 120e-6; % ADC-gradient delay, scanner specific (s)
-    b1_max = 0.25;         % Gauss
-    g_max = 5;             % Gauss/cm
-    slew_max = 20;         % Gauss/cm/ms
-    gamma = 4.2576e3;      % Hz/Gauss
-    sys = pge2.getsys(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, gamma);
+3. Check the sequence with `pge2.check()` and `pge2.validate()`.
+   See https://github.com/HarmonizedMRI/PulCeq/tree/tv7/matlab/%2Bpge2 for details.
 
-    % Check if 'ceq' is compatible with the parameters in 'sys'
-    pge2.validate(ceq, sys);
-    ```
-    See https://github.com/HarmonizedMRI/PulCeq/tree/tv7/matlab/%2Bpge2 for details.
-
-4. If step 3 runs without errors, write the Ceq object to file:
-    ```matlab
-    pislquant = 10;  % number of ADC events at start of scan for receive gain calibration
-    writeceq(ceq, 'gre2d.pge', 'pislquant', pislquant);   % write Ceq struct to file
-    ```
+4. If step 3 runs without errors, write the Ceq object to file with `writeceq()`.
 
 5. Execute the .pge file with the pge2 interpreter.
 
-An alternative workflow is to prescribe the sequence interactively using [Pulserver](https://github.com/INFN-MRI/pulserver/) -- 
-this is work in progress to be presented at ISMRM 2025.
+An alternative workflow is to prescribe the sequence interactively using [Pulserver](https://github.com/INFN-MRI/pulserver/).
 
 
-### Quick start
+### Obtaining the software
 
-We recommend starting with the example in [2DGRE](2DGRE).
+To use the pge2 Pulseq interpreter, you will need two separate pieces of softare:
+the PulCeq MATLAB toolbox, 
+and the EPIC source code (or compiled binaries) for the interpreter itself.
 
-For information about accessing and using the pge2 interpreter, see information below.
+PulCeq is available here: https://github.com/HarmonizedMRI/PulCeq/releases  
+The pge2 interpreter is available here: https://github.com/GEHC-External/pulseq-ge-interpreter 
 
+Beginning with v2.5.2.0, the version numbers of PulCeq and pge will match.
 
-### Discussion forum
-
-We encourage you to post questions/suggestions about Pulseq on GE on the
-[discussion forum](https://github.com/jfnielsen/TOPPEpsdSourceCode/discussions/)
-on the EPIC source code repository Github site.
-
-Bug reports can be submitted to the
-[Issues forum](https://github.com/jfnielsen/TOPPEpsdSourceCode/issues/),
-also on the EPIC source code site.
-
-
-### Differences from the tv6 interpreter
-
-Compared to tv6, the main features of the pge2 interpreter are:
-* Loads a single binary file. We suggest using the file extension '.pge' but this is not a requirement. 
-This file can be created with 
-[Pulserver](https://github.com/INFN-MRI/pulserver/),
-or with seq2ceq.m and writeceq.m as described below.
-* Places the trapezoid, extended trapezoid, and arbitrary waveform events directly onto the hardware,
-  without first interpolating to 4us raster time as in the tv6 interpreter. 
-  This saves hardware memory and enables things like very long constant (CW) RF pulses.
-* Updated gradient heating and SAR/RF checks, based on sliding-window calculations.
-
-
-
-## Software releases
-
-It is important to use the appropriate versions (release) of the PulCeq toolbox and pge2 interpreter.
-In each example included here, the versions are specified. See [2DGRE/main.m](2DGRE/main.m) for an example.
-
-For pge2 the version (release) numbering scheme is
+The version number scheme is:
 ```
-v2.major.minor
-```
-where `major` indicates incompabitibility with previous versions, typically due to changes in 
-the .pge file format.
+v2.<major>.<minor>.<patch>
 
-The following is a list of mutually compatible versions of the pge2 interpreter and the PulCeq MATLAB toolbox,
-starting with the latest (and recommended) version:
+<major>    Backward-incompatible changes, e.g., to the .pge file format
+<minor>    Backward-compatible feature additions, e.g., functions for sequence display/checks
+<pathc>    minor changes and bug fixes 
+```
+
+For example, if using pge2 interprever v2.5.2.0, the recommended PulCeq version is v.2.5.2.0 
+but any version v2.5.x.y should produce a .pge file that can be executed by the interpreter.
+
+Version history:
 
 | pge2 (tv7) | Compatible with:   | Comments |
 | ---------- | ------------------ | -------- |
-| [v2.5.2.0](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.2.0) | [PulCeq v2.4.2](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.2) | bug fixes; direct rotation event support|
+| [v2.5.2.1](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.2.0) | [PulCeq v2.5.2.x](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.5.2.0) | (latest) new checks; rotation event support|
 | [v2.5.0-beta3](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta3) | [PulCeq v2.4.1](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.1) | Added MP26 support. |
 | [v2.5.0-beta2](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta2) | [PulCeq v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) | DV26 support. Bug fixes. |
 | [v2.5.0-beta](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta) | [PulCeq v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) | Allow segments without gradients to pass heating check. |
 | [v2.4.0-alpha](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.4.0-alpha) | [PulCeq v2.3.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.3.0-alpha) | Remove limit on total number of Pulseq blocks. |
 | [v2.3.0](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.3.0) | [PulCeq v2.2.3-beta](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.2.3-beta) | Supports 3D rotations |
-
-A complete list of the release histories are available here:  
-https://github.com/HarmonizedMRI/PulCeq/releases/  
-https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/ 
 
 
 
@@ -170,14 +127,12 @@ for i = 1:Ny
 end
 ```
 See also the examples included in this repository.
-The TRID can be any unique integer, in no particular order. 
+The TRID can be **any unique positive integer**, in no particular order. 
 The TRID labels the **virtual** segment, NOT the segment instance.
 
 When assigning TRID labels, **follow these rules**:
 1. Add a TRID label to the first block in a segment. 
-2. Each segment must contain at least one rf or gradient event.
-   Otherwise, the safety checks done by the pge2 interpreter may fail.
-3. Gradient waveforms must ramp to zero at the beginning and end of a segment.
+2. Gradient waveforms must ramp to zero at the beginning and end of a segment.
 
 Dynamic sequence changes that **do not** require the creation of an additional (unique) TRID label:
 * gradient/RF amplitude scaling
@@ -191,9 +146,9 @@ Dynamic sequence changes that **do** require a separate segment (TRID) to be ass
 * duration of any of the blocks within a segment, unless it is a pure delay block
 
 Other things to note:
-* The interpreter inserts a 116us dead time (gap) at the end of each segment instance.
+* The interpreter inserts a 117us dead time (gap) at the end of each segment instance.
 Please account for this when creating your .seq file.
-(Actually, this gap is adjustable on the scanner -- it is equal to 16us plus the ssi time.)
+(Actually, this gap is adjustable on the scanner -- it is equal to 17us plus the ssi time.)
 * Each **virtual** segment takes up waveform memory in hardware, so it is generally good practice 
 to divide your sequence into as few virtual segments as possible, each being as short as possible.
   
@@ -233,7 +188,6 @@ you should use when creating the .seq file.
 While the Pulseq MATLAB toolbox encourages the insertion of RF/ADC dead/ringdown times at the beginning
 and end of each block, this is generally not necessary on GE,
 and it is perfectly ok to override that behavior to make the sequence more time-efficient.
-See the `sys` struct example next.
 
 **Examples:**
 ```matlab
@@ -271,7 +225,6 @@ by modifying the event delays and block durations when creating the .seq file.
 
 
 
-
 ### Additional recommendations
 
 * **Pre-define events outside of the main loop in your .seq file creation script.**
@@ -305,36 +258,29 @@ This helps catch errors before simulating in WTools or scanning.
 ### Sequence timing: Summary and further comments
 
 * When loading a segment, the interpreter inserts a 117us dead time at the end of each segment.
-* The parameters `rfDeadTime`, `rfRingdownTime`, and `adcDeadTime` were included in the Pulseq MATLAB toolbox
-with Siemens scanners in mind, and as just discussed, setting them to 0 can in fact be a preferred option in many cases for GE users.
+* The default values for `rfDeadTime`, `rfRingdownTime`, and `adcDeadTime` in the Pulseq MATLAB toolbox
+were set with Siemens scanners in mind, and as just discussed, setting them to 0 can in fact be a preferred option in many cases for GE users.
 This is because the default behavior in the Pulseq toolbox is to quietly insert corresponding gaps at the 
-start end end of each block, however this is not necessary on GE since the block boundaries 'vanish' within a segment.
+start end end of each block, however this is not necessary on GE since the block boundaries 'disappear' within a segment.
 * In the internal sequence representation used by the interpreter, RF and ADC events are delayed by about 100us to account for gradient delays.
 Depending on the sequence details, you may need to extend the segment duration to account for this.
 
-The Pulseq on GE v1 (tv6) user guide pdf discusses some of these points in more detail.
-
-
-## Executing the pge file on the scanner
-
-For scan instructions and troubleshooting tips, see https://github.com/jfnielsen/TOPPEpsdSourceCode/tree/UserGuide/v7
+The `pge2.check()` and `pge2.validate()` functions help to catch many issues before attempting to simulate or run on the scanner.
 
 
 ## Safety management
 
 ### PNS
 
-PNS can be estimated in MATLAB using various tools, e.g., the [toppe.pns()](https://github.com/toppeMRI/toppe/blob/main/%2Btoppe/pns.m) function for GE, 
-or the [SAFE model](https://github.com/filip-szczepankiewicz/safe_pns_prediction) for Siemens.
- [TODO: include an example of this]
+This is currently built in to the MATLAB function `pge2.check()`.
 
 ### Gradient and RF subsystem protection, and patient SAR
 
 This is handled for you by the interpreter, using a sliding-average estimation that parses through
-**the first 64,000 blocks** in the sequence (or until the end of the scan is reached, whichever comes first).
+**the first 40,000 blocks** in the sequence (or until the end of the scan is reached, whichever comes first).
 It is your responsibility to ensure that the gradient/RF power in the remainder of the sequence
-does not exceed that in the first 64,000 blocks.
-This limit (64,000) is due to apparent memory limitations and has been determined empirically.
+does not exceed that in the first 40,000 blocks.
+This limit (40,000) is due to apparent memory limitations and has been determined empirically.
 
 
 
