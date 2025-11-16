@@ -80,7 +80,7 @@ Version history:
 
 | pge2 (tv7) | Compatible with:   | Comments |
 | ---------- | ------------------ | -------- |
-| [v2.5.2.1](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.2.0) | [PulCeq v2.5.2.x](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.5.2.0) | (latest) new checks; rotation event support|
+| [v2.5.2.1](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.2.1) | [PulCeq v2.5.2.x](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.5.2.0) | (latest) new checks; rotation event support|
 | [v2.5.0-beta3](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta3) | [PulCeq v2.4.1](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.1) | Added MP26 support. |
 | [v2.5.0-beta2](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta2) | [PulCeq v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) | DV26 support. Bug fixes. |
 | [v2.5.0-beta](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta) | [PulCeq v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) | Allow segments without gradients to pass heating check. |
