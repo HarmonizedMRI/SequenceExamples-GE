@@ -44,9 +44,8 @@ see the [2DGRE](./2DGRE/) example in this folder.
    NB! Make sure the versions of the PulCeq MATLAB toolbox and the pge2 interpreter are compatible -- see below.
 
 3. Check the sequence with `pge2.check()` and `pge2.validate()`.
-   See https://github.com/HarmonizedMRI/PulCeq/tree/tv7/matlab/%2Bpge2 for details.
 
-4. If step 3 runs without errors, write the Ceq object to file with `writeceq()`.
+4. Write the Ceq object to a .pge file with `writeceq()`.
 
 5. Execute the .pge file with the pge2 interpreter.
 
