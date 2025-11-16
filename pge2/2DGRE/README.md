@@ -1,8 +1,7 @@
 # 2D spoiled GRE sequence for Pulseq on GE v2 (pge2)
 
-Dual-echo 2D SPGR acquisition, with two different ADC events with different bandwidth and number of samples acquired.
-
-This is the 'official' demo sequence and it is a good idea to try it first so you understand the workflow.
+This is the 'official' demo sequence and it is a good idea to try it first so you understand the workflow,
+and to carefully inspect write2DGRE.m including all comments.
 
 Tested on the following system(s):  
 | Scanner | Scanner SW version | pge2 version | PulCeq version |  
