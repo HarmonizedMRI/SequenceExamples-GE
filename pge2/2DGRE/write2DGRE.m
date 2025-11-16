@@ -1,7 +1,22 @@
 % write2DGRE.m
-% 2D RF-spoiled sequence. Acquires two echoes with different bandwidth and resolution.
+% 2D RF-spoiled sequence
+%
+% Demonstrates the following:
+%  - two different ADC events with different bandwidth and resolution
+%  - empty blocks (zero duration) containing nothing but a (TRID) label
+%  - two kinds of delay blocks: 
+%    (1) those with constant duration throughout the scan. 
+%        The pge2 interpreter implements these by simply 
+%        moving the time marker within the segment.
+%    (2) those with variable duration throughout the scan. 
+%        The pge2 interpreter implements these by creating a WAIT pulse
+%        whose duration varies dynamically as specified in the ceq.loop array.
+%    It is good to be aware of the difference, since the present of WAIT pulses
+%    can potentially interfere with other Pulseq events (RF and ADC).
+%  - 'noise scans': segments consisting of nothing but an ADC event and delays 
 
 % System/design parameters.
+% These do not have to match the actual hardware limits.
 % Reduce gradients by 1/sqrt(3) to allow for oblique scans.
 % Reduce slew a bit further to reduce PNS.
 sys = mr.opts('maxGrad', 50/sqrt(3), 'gradUnit','mT/m', ...
@@ -10,8 +25,8 @@ sys = mr.opts('maxGrad', 50/sqrt(3), 'gradUnit','mT/m', ...
               'rfRingdownTime', 60e-6, ...
               'adcDeadTime', 40e-6, ...
               'adcRasterTime', 2e-6, ...
-              'rfRasterTime', 2e-6, ...
-              'gradRasterTime', 4e-6, ...
+              'rfRasterTime', 4e-6, ...  % must be integer multiple of 2us
+              'gradRasterTime', 4e-6, ...  
               'blockDurationRaster', 4e-6, ...
               'B0', 3.0);
 
@@ -23,9 +38,9 @@ seq = mr.Sequence(sys);
 fov = 240e-3; 
 Nx = 192; Ny = 192;                 % 
 dwell = 20e-6;                      % ADC sample time (s)
-sliceThickness = 3e-3;              % slice thickness (m)
+sliceThickness = 5e-3;              % slice thickness (m)
 alpha = 6;                          % flip angle (degrees)
-TR = 30e-3;                         % repetition time TR (s)
+delayTR = 5e-3;                     % for demonstrating variable delays
 rfSpoilingInc = 117;                % RF spoiling increment
 
 t_pre = 1e-3; % duration of x pre-phaser
@@ -37,7 +52,8 @@ t_pre = 1e-3; % duration of x pre-phaser
     'timeBwProduct', 4, 'system', sys);
 gzReph = mr.makeTrapezoid('z', 'Area', -gz.area/2, 'Duration', t_pre, 'system', sys);
 
-% Define other gradients and ADC events
+% Define other gradients and ADC events.
+% Define them once, then scale amplitudes as needed in the scan loop.
 deltak = 1/fov;
 gx = mr.makeTrapezoid('x', 'FlatArea', Nx*deltak, 'FlatTime', Nx*dwell, 'system', sys);
 adc = mr.makeAdc(Nx, 'Duration', gx.flatTime, 'Delay', gx.riseTime, 'system', sys);
@@ -50,27 +66,18 @@ peScales = phaseAreas/gyPre.area;
 gxSpoil = mr.makeTrapezoid('x', 'Area', 2*Nx*deltak, 'system', sys);
 gzSpoil = mr.makeTrapezoid('z', 'Area', 4/sliceThickness, 'system', sys);
 
-% Calculate delay to achieve desired TR
-seq2 = mr.Sequence(sys);
-seq2.addBlock(rf, gz);
-seq2.addBlock(gxPre, gyPre, gzReph);
-seq2.addBlock(gx);
-seq2.addBlock(mr.scaleGrad(gx, -1));
-seq2.addBlock(gxSpoil, gyPre, gzSpoil);
-delayTR = ceil((TR - seq2.duration)/seq.gradRasterTime)*seq.gradRasterTime;
-assert(delayTR > 100e-6, 'Requested TR is too short');
 
-% Loop over phase encodes and define sequence blocks
+%% 2D GRE scan, dual-echo
 % iY <= -10        Dummy shots to reach steady state
 % -10 < iY <= 0    ADC is turned on and used for receive gain calibration on GE
 % iY > 0           Image acquisition
 
 nDummyShots = 20;  % shots to reach steady state
-pislquant = 10;     % number of shots/ADC events used for receive gain calibration
 
 rf_phase = 0;
 rf_inc = 0;
 
+TRisSet = false;
 for iY = (-nDummyShots-pislquant+1):Ny
     isDummyTR = iY <= -pislquant;
     isReceiveGainCalibrationTR = iY < 1 & iY > -pislquant;
@@ -86,7 +93,11 @@ for iY = (-nDummyShots-pislquant+1):Ny
     % Mark start of segment (block group) by adding TRID label.
     % The TRID can be any integer, but must be unique to each segment.
     % Subsequent blocks in block group are NOT labelled.
-    seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
+    % The TRID label can belong to a block with zero or more other events.
+    seq.addBlock(mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
+    seq.addBlock(rf, gz);
+    % Alternative:
+    % seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
 
     % Slice-select refocus and readout prephasing
     % Set phase-encode gradients to zero while iY < 1
@@ -94,6 +105,11 @@ for iY = (-nDummyShots-pislquant+1):Ny
     pesc = pesc + (pesc == 0)*eps;        % non-zero scaling so that the trapezoid shape is preserved in the .seq file
 
     seq.addBlock(gxPre, mr.scaleGrad(gyPre, pesc), gzReph);
+
+    % Empty blocks with a label is ok -- for now they are ignored by the GE interpreter.
+    % These are just dummy examples to make the point.
+    seq.addBlock(mr.makeLabel('SET','LIN', max(1,iY)) ) ;
+    seq.addBlock(mr.makeLabel('SET','AVG', 0));
 
     % Non-flyback 2-echo readout
     if isDummyTR
@@ -109,8 +125,26 @@ for iY = (-nDummyShots-pislquant+1):Ny
     end
 
     % Spoil and PE rephasing, and TR delay
-    seq.addBlock(gxSpoil, mr.scaleGrad(gyPre, -pesc), gzSpoil);
-    seq.addBlock(mr.makeDelay(delayTR));
+    % Shift z spoiler position using variable delays, for fun
+    seq.addBlock(gxSpoil, mr.scaleGrad(gyPre, -pesc));
+    dt = 20e-6*max(1,iY);
+    seq.addBlock(mr.makeDelay(dt));
+    seq.addBlock(gzSpoil);
+    seq.addBlock(mr.makeDelay(delayTR-dt));
+
+    if ~TRisSet
+        TR = seq.duration;
+        TRisSet = true;
+    end
+end
+
+%% Noise scans
+nNoiseScans = 5;
+for s = 1:nNoiseScans
+    seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique int
+    seq.addBlock(mr.makeDelay(1)); 
+    seq.addBlock(adc);
+    seq.addBlock(mr.makeDelay(500e-6)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
 end
 
 %% Check sequence timing
@@ -125,8 +159,8 @@ end
 
 %% Output for execution and plot
 seq.setDefinition('FOV', [fov fov sliceThickness]);
-seq.setDefinition('Name', 'gre2d');
-seq.write('gre2d.seq')       % Write to pulseq file
+seq.setDefinition('Name', fn);
+seq.write([fn '.seq'])       % Write to pulseq file
 
 seq.plot('timeRange', [0 3]*TR);
 
