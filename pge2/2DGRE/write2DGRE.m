@@ -1,7 +1,7 @@
 % write2DGRE.m
-% GE-friendly 2D RF-spoiled sequence in Pulseq
 %
 % Demonstrates the following:
+%  - good coding practices for writing a Pulseq sequence in a GE-friendly way
 %  - two different ADC events with different bandwidth and resolution
 %  - empty blocks (zero duration) containing nothing but a (TRID) label
 %  - two kinds of delay blocks: 
@@ -75,7 +75,8 @@ gzSpoil = mr.makeTrapezoid('z', 'Area', 4/sliceThickness, 'system', sys);
 % Done creating events. These will become the 'base blocks' in the Ceq sequence representation.
 % Next, define the scan loop, where we will NOT define any new events, since any events
 % defined on the fly *might* differ from those defined above in sometimes subtle ways.
-% The only exception is that it is safe to create pure delay blocks with mr.makeDelay(), see below.
+% The only exception is that it is safe to create pure delay blocks with mr.makeDelay(), 
+% to vary the timing dynamically in the scan loop (see example below).
 
 %% Scan loop
 % iY <= -10        Dummy shots to reach steady state
@@ -92,7 +93,7 @@ for iY = (-nDummyShots-pislquant+1):Ny
     isDummyTR = iY <= -pislquant;
     isReceiveGainCalibrationTR = iY < 1 & iY > -pislquant;
 
-    % RF spoiling
+    % Set phase for RF spoiling
     rf.phaseOffset = rf_phase/180*pi;
     adc.phaseOffset = rf_phase/180*pi;
     adc2.phaseOffset = adc.phaseOffset;
@@ -116,8 +117,8 @@ for iY = (-nDummyShots-pislquant+1):Ny
     %             The different segment instances contain the same sequence of blocks,
     %             except (generally) with different values of the following properties:
     %              - RF and gradient waveform amplitude
-    %              - RF/ADC phase offsets
     %              - RF frequency offset
+    %              - RF/ADC phase offsets
     %              - duration of pure delay blocks (see below)
     seq.addBlock(mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
     seq.addBlock(rf, gz);   % excitation block
