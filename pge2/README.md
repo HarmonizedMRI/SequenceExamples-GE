@@ -73,7 +73,7 @@ v2.<major>.<minor>.<patch>
 <pathc>    minor changes and bug fixes 
 ```
 
-For example, if using pge2 interprever v2.5.2.0, the recommended PulCeq version is v.2.5.2.0 
+For example, if using pge2 interpreter v2.5.2.0, the recommended PulCeq version is v.2.5.2.0 
 but any version v2.5.x.y should produce a .pge file that can be executed by the interpreter.
 
 Version history:
