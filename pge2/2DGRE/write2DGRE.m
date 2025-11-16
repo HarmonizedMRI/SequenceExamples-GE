@@ -1,8 +1,8 @@
 % write2DGRE.m
 %
 % 'Official' demo/learning sequence for Pulseq on GE 
-% using the community-developed pge2 interpreter.
-% Please inspect this file carefully. Your feedback is welcome!
+% using the community-developed pge2 interpreter
+% (https://github.com/GEHC-External/pulseq-ge-interpreter).
 %
 % Demonstrates the following:
 %  - good coding practices for writing a Pulseq sequence in a GE-friendly way
