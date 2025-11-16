@@ -41,7 +41,6 @@ see the [2DGRE](./2DGRE/) example in this folder.
 1. Create the .seq file more or less as one usually does, but see the information below about adding TRID labels and other considerations.
 
 2. Convert the .seq file to a PulCeq sequence object (`ceq`). 
-   NB! Make sure the versions of the PulCeq MATLAB toolbox and the pge2 interpreter are compatible -- see below.
 
 3. Check the sequence with `pge2.check()` and `pge2.validate()`.
 
@@ -54,7 +53,7 @@ An alternative workflow is to prescribe the sequence interactively using [Pulser
 
 ### Obtaining the software
 
-To use the pge2 Pulseq interpreter, you will need two separate pieces of softare:
+To use the pge2 Pulseq interpreter, you will need two separate pieces of software:
 the PulCeq MATLAB toolbox, 
 and the EPIC source code (or compiled binaries) for the interpreter itself.
 
