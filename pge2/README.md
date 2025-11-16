@@ -25,10 +25,11 @@ This also means that care has to be taken when designing the Pulseq file, such a
 gradient and RF raster times that are in fact supported by GE hardware.
 The information on this page is designed to guide you in creating robust Pulseq sequences for GE scanners.
 
-It is recommended to first simulate the sequence in the GE simulator (WTools),
+It is recommended to first simulate the sequence in the GE simulator and plotter (Pulse View),
 which helps to identify most potential issues before going to the scanner.
-The simulator output (xml files) can be compared directly with the original .seq file using the `pge2.validate()` function,
-to ensure correct executation.
+The simulator output (xml files) can also be compared directly with the original .seq file 
+using the `pge2.validate()` MATLAB function, to verify correct execution.
+
 
 
 ### Workflow 
