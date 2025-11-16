@@ -1,5 +1,5 @@
 % write2DGRE.m
-% 2D RF-spoiled sequence
+% GE-friendly 2D RF-spoiled sequence in Pulseq
 %
 % Demonstrates the following:
 %  - two different ADC events with different bandwidth and resolution
@@ -11,23 +11,29 @@
 %    (2) those with variable duration throughout the scan. 
 %        The pge2 interpreter implements these by creating a WAIT pulse
 %        whose duration varies dynamically as specified in the ceq.loop array.
-%    It is good to be aware of the difference, since the present of WAIT pulses
-%    can potentially interfere with other Pulseq events (RF and ADC).
+%    It is good to be aware of the difference, since the presence of WAIT pulses
+%    can potentially interfere with other nearby Pulseq events (RF and ADC).
+%    Varying the duration of a pure delay block does not require a new TRID to be assigned.
 %  - 'noise scans': segments consisting of nothing but an ADC event and delays 
+%
+% See also ../README.md
 
 % System/design parameters.
-% These do not have to match the actual hardware limits.
+% Since the block boundaries 'disappear' inside a segment,
+% it is often desirable to set dead/ringdown times to 0 to keep
+% the +mr toolbox from silently inserting delays where you don't expect them. 
+% The following values do not have to match the actual hardware limits.
 % Reduce gradients by 1/sqrt(3) to allow for oblique scans.
-% Reduce slew a bit further to reduce PNS.
+% Note that the function pge2.check() checks PNS for you.
 sys = mr.opts('maxGrad', 50/sqrt(3), 'gradUnit','mT/m', ...
               'maxSlew', 120/sqrt(3), 'slewUnit', 'T/m/s', ...
-              'rfDeadTime', 100e-6, ...
-              'rfRingdownTime', 60e-6, ...
-              'adcDeadTime', 40e-6, ...
-              'adcRasterTime', 2e-6, ...
-              'rfRasterTime', 4e-6, ...  % must be integer multiple of 2us
-              'gradRasterTime', 4e-6, ...  
-              'blockDurationRaster', 4e-6, ...
+              'rfDeadTime', 100e-6, ...     % or 0
+              'rfRingdownTime', 60e-6, ...  % or 0
+              'adcDeadTime', 40e-6, ...     % or 0
+              'adcRasterTime', 2e-6, ...    % GE dwell time must be a multiple of 2us
+              'rfRasterTime', 4e-6, ...     % 2e-6, or any integer multiple thereof
+              'gradRasterTime', 4e-6, ...   % 4e-6, or any integer multiple thereof
+              'blockDurationRaster', 4e-6, ... % 4e-6, or any integer multiple thereof
               'B0', 3.0);
 
 % Create a new sequence object
@@ -53,7 +59,7 @@ t_pre = 1e-3; % duration of x pre-phaser
 gzReph = mr.makeTrapezoid('z', 'Area', -gz.area/2, 'Duration', t_pre, 'system', sys);
 
 % Define other gradients and ADC events.
-% Define them once, then scale amplitudes as needed in the scan loop.
+% Define them once here, then scale amplitudes as needed in the scan loop.
 deltak = 1/fov;
 gx = mr.makeTrapezoid('x', 'FlatArea', Nx*deltak, 'FlatTime', Nx*dwell, 'system', sys);
 adc = mr.makeAdc(Nx, 'Duration', gx.flatTime, 'Delay', gx.riseTime, 'system', sys);
@@ -66,8 +72,12 @@ peScales = phaseAreas/gyPre.area;
 gxSpoil = mr.makeTrapezoid('x', 'Area', 2*Nx*deltak, 'system', sys);
 gzSpoil = mr.makeTrapezoid('z', 'Area', 4/sliceThickness, 'system', sys);
 
+% Done creating events. These will become the 'base blocks' in the Ceq sequence representation.
+% Next, define the scan loop, where we will NOT define any new events, since any events
+% defined on the fly *might* differ from those defined above in sometimes subtle ways.
+% The only exception is that it is safe to create pure delay blocks with mr.makeDelay(), see below.
 
-%% 2D GRE scan, dual-echo
+%% Scan loop
 % iY <= -10        Dummy shots to reach steady state
 % -10 < iY <= 0    ADC is turned on and used for receive gain calibration on GE
 % iY > 0           Image acquisition
@@ -88,19 +98,34 @@ for iY = (-nDummyShots-pislquant+1):Ny
     adc2.phaseOffset = adc.phaseOffset;
     rf_inc = mod(rf_inc+rfSpoilingInc, 360.0);
     rf_phase = mod(rf_phase+rf_inc, 360.0);
-    
-    % Excitation block
-    % Mark start of segment (block group) by adding TRID label.
-    % The TRID can be any integer, but must be unique to each segment.
-    % Subsequent blocks in block group are NOT labelled.
+
+    % Mark start of segment instance (block group) by adding TRID label.
+    % The TRID can be any postivie integer, but must be unique to each segment.
+    % Subsequent blocks in block group are NOT labelled (this is akin to 
+    % the use of SEQLENGTH in EPIC to define segments/cores).
     % The TRID label can belong to a block with zero or more other events.
+    %
+    % Note the distinction here between 'segment' and 'segment instance':
+    %  'segment': a virtual segment definition, represented in hardware 
+    %             using normalized waveform amplitudes. So it is 'virtual'
+    %             in the sense that it hasn't been assigned physical amplitudes/units,
+    %             but it is very real since it is physically implemented in hardware!
+    %  'segment instance': one executation/instance of a segment, with amplitudes
+    %             in physical units (G/cm, etc). Each segment instance is associated
+    %             with the TRID of the virtual segment it is an instance of. 
+    %             The different segment instances contain the same sequence of blocks,
+    %             except (generally) with different values of the following properties:
+    %              - RF and gradient waveform amplitude
+    %              - RF/ADC phase offsets
+    %              - RF frequency offset
+    %              - duration of pure delay blocks (see below)
     seq.addBlock(mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
-    seq.addBlock(rf, gz);
+    seq.addBlock(rf, gz);   % excitation block
     % Alternative:
     % seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
 
-    % Slice-select refocus and readout prephasing
-    % Set phase-encode gradients to zero while iY < 1
+    % Slice-select refocus and readout prephasing block
+    % Set phase-encode gradients to ~zero while iY < 1
     pesc = (iY>0) * peScales(max(iY,1));  % phase-encode gradient scaling
     pesc = pesc + (pesc == 0)*eps;        % non-zero scaling so that the trapezoid shape is preserved in the .seq file
 
@@ -136,15 +161,19 @@ for iY = (-nDummyShots-pislquant+1):Ny
         TR = seq.duration;
         TRisSet = true;
     end
+
+    % We're now at the end of a segment instance
 end
 
 %% Noise scans
 nNoiseScans = 5;
 for s = 1:nNoiseScans
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique int
+    % Now we need to define a different sub-sequence,
+    % so we need to label start of segment instance with a new unique TRID
+    seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique positive int
     seq.addBlock(mr.makeDelay(1)); 
     seq.addBlock(adc);
-    seq.addBlock(mr.makeDelay(500e-6)); % make room for psd_grd_wait (ADC delay) and ADC ringdown
+    seq.addBlock(mr.makeDelay(500e-6)); % make room for psd_grd_wait (gradient/ADC delay) and ADC ringdown
 end
 
 %% Check sequence timing
@@ -163,6 +192,10 @@ seq.setDefinition('Name', fn);
 seq.write([fn '.seq'])       % Write to pulseq file
 
 seq.plot('timeRange', [0 3]*TR);
+
+% Done creating the .seq file! 
+% Now you can use the various plot/checks available in the Pulseq toolbox.
+% Then convert the .seq file to a .pge file and check the result -- see main.m.
 
 %% Optional slow step, but useful for testing during development,
 %% e.g., for the real TE, TR or for staying within slewrate limits  
