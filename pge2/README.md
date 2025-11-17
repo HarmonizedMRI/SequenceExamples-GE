@@ -71,7 +71,7 @@ v2.<major>.<minor>.<patch>
 
 <major>    Backward-incompatible changes, e.g., to the .pge file format
 <minor>    Backward-compatible feature additions, e.g., functions for sequence display/checks
-<pathc>    minor changes and bug fixes 
+<patch>    minor changes and bug fixes 
 ```
 
 For example, if using pge2 interpreter v2.5.2.0, the recommended PulCeq version is v.2.5.2.0 
