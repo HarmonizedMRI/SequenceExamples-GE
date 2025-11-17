@@ -39,14 +39,17 @@ For the most up to date implementation of the following steps,
 see the [2DGRE](./2DGRE/) example in this folder.
 
 1. Create the .seq file more or less as one usually does, but see the information below about adding TRID labels and other considerations.
-
-2. Convert the .seq file to a PulCeq sequence object (`ceq`). 
-
-3. Check the sequence with `pge2.check()` and `pge2.validate()`.
-
-4. Write the Ceq object to a .pge file with `writeceq()`.
-
-5. Execute the .pge file with the pge2 interpreter.
+2. Convert the .seq file to a .pge file.  
+    1. Convert to a PulCeq sequence object (`ceq`):
+    ```
+    >> ceq = seq2ceq('gre2d.seq');
+    ```
+    2. Inspect and check the sequence with `pge2.plot()', `pge2.check()`, and `pge2.validate()`.
+    3. Write the .pge file:
+    ```
+    >> writeceq(ceq, 'gre2d.pge');
+    ```
+3. Execute the .pge file on the scanner using the pge2 interpreter.
 
 An alternative workflow is to prescribe the sequence interactively using [Pulserver](https://github.com/INFN-MRI/pulserver/).
 
