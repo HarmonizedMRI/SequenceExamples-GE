@@ -14,7 +14,6 @@ if createSequenceFile
 
     % Write the .seq file
     writedemo;
-    return
 
     % Convert .seq file to a Ceq object
     ceq = seq2ceq([fn '.seq']);   %, 'usesRotationEvents', false);
@@ -35,6 +34,7 @@ if createSequenceFile
     % Write ceq object to file.
     % pislquant is the number of ADC events used to set Rx gains in Auto Prescan
     writeceq(ceq, [ fn '.pge'], 'pislquant', pislquant);
+    return
 
     %% The .pge file just created is probably playable on your scanner,
     %% but the following examples illustrate additional checks 
