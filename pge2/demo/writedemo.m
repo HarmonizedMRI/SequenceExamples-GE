@@ -82,7 +82,7 @@ gzSpoil = mr.makeTrapezoid('z', 'Area', 4/sliceThickness, 'system', sys);
 % The only exception is that it is safe to create pure delay blocks with mr.makeDelay(), 
 % to vary the timing dynamically in the scan loop (see example below).
 
-%% Now we contruct the sequence by calling seq.addBlock() 
+%% Now we build the sequence by calling seq.addBlock() 
 
 % 2D spin-warp (Cartesian) SPGR/FLASH sequence
 % iY <= -pislquant        Dummy shots to reach steady state
@@ -116,7 +116,8 @@ for iY = (-nDummyShots-pislquant+1):Ny
     %             using normalized waveform amplitudes. So it is 'virtual'
     %             in the sense that it hasn't been assigned physical amplitudes/units,
     %             but it is very real since it is physically implemented in hardware!
-    %  'segment instance': one executation/instance of a segment, with amplitudes
+    %             The TRID label marks a virtual segment.
+    %  'segment instance': one execution/instance of a segment, with amplitudes
     %             in physical units (G/cm, etc). Each segment instance is associated
     %             with the TRID of the virtual segment it is an instance of. 
     %             The different segment instances contain the same sequence of blocks,
@@ -159,39 +160,57 @@ for iY = (-nDummyShots-pislquant+1):Ny
     % Shift z spoiler position using variable delays, for fun
     seq.addBlock(gxSpoil, mr.scaleGrad(gyPre, -pesc));
     dt = 20e-6*max(1,iY);
-    seq.addBlock(mr.makeDelay(dt));
+    seq.addBlock(mr.makeDelay(dt));  % variable delay, implemented as a WAIT pulse by the interpreter
     seq.addBlock(gzSpoil);
-    seq.addBlock(mr.makeDelay(delayTR-dt));
+    seq.addBlock(mr.makeDelay(delayTR-dt));  % another variable delay block
 
     % We're now at the end of a segment instance
 end
 
-% Play a few rotated non-cartesian gradients, 
-% to illustrate arbitrary gradients.
+% Play a rotated spiral gradient, 
+% to illustrate arbitrary gradients and rotation events.
+% NB! If any of the blocks inside a segment contains a rotation event,
+% that rotation will be applied to the entire segment!
 dt = sys.gradRasterTime;
-n = 1000;              % number of samples in waveform
+n = 2000;              % number of samples in waveform
 T = n*dt;              % duration of spiral
 t = dt*(1:n) - dt/2;   % sample times at center of raster intervals
 gamp = 20e-3;    % T/m
-gamp = 2;
 r = gamp * t/T;
 th = 4*2*pi/T*t;
 g = r .* exp(1i*th);
-g = [g linspace(g(end), 0, 100)]; % ramp to zero
+g = [g linspace(g(end), 0, 100)];   % ramp to zero
 
-gx = mr.makeArbitraryGrad('x', real(g)*sys.gamma, ...  % input in Hz/m
+sp.gx = mr.makeArbitraryGrad('x', real(g)*sys.gamma, ...  % input in Hz/m
     'Delay', 0, ...
     'system', sys, ...
     'first', 0, 'last', 0);   % values at raster edges
-gx = mr.makeArbitraryGrad('y', imag(g)*sys.gamma, ...  
-    'Delay', 0, ...
+sp.gy = mr.makeArbitraryGrad('y', imag(g)*sys.gamma, ...  
+    'Delay', sp.gx.delay, ...
     'system', sys, ...
     'first', 0, 'last', 0);  
-return
+
+Nint = 3;   % number of rotations
+for ii = 1:Nint
+    % Define new (virtual) segment by defining a new TRID
+    seq.addBlock(mr.makeLabel('SET', 'TRID', 47));
+    th = (ii-1)*2*pi/Nint;    % rotation angle
+    th = angle(exp(1i*th));   % wrap to [-pi pi] range
+    rot = mr.makeRotation([0 0 1], th);  % rotation event. axis-angle notation
+    seq.addBlock(sp.gx, sp.gy, rot);
+
+    % NB! When executing on a GE scanner, everything else inside this segment also gets rotated!
+    % Such as the following trapezoid.
+    % seq.addBlock(mr.scaleGrad(gx, 1));   % Unsafe! Will get rotated along with the spiral!
+
+    % However, the following is ok in this particular case since the rotation is about the z-axis
+    % and so gz is unaffected in practice and can belong to the same segment as the spiral.
+    seq.addBlock(gz);   
+end
 
 % Insert noise measurement
 % For this we need to define a different sub-sequence (segment),
-% so we need to label start of segment instance with a new unique TRID
+% so we again need to label start of segment instance with a new unique TRID
 seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique positive int
 seq.addBlock(mr.makeDelay(1));  % pure delay block
 seq.addBlock(adc);
