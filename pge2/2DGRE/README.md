@@ -6,7 +6,7 @@ and to carefully inspect write2DGRE.m including all comments.
 Tested on the following system(s):  
 | Scanner | Scanner SW version | pge2 version | PulCeq version |  
 | --- | --- | --- | --- |
-| GE UHP | MR30.1\_R01 | [v2.5.2.1](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.2.1) | [v2.5.2.0](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.5.2.0) |  
+| GE UHP | MR30.1\_R01 | [v2.5.2.1](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.2.1) | [v2.5.2.1](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.5.2.1) |  
 
 <!--
 | GE MR750 | MR30.1\_R01 | [v2.5.0-beta](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta) | [v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) |  
