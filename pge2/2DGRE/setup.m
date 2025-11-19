@@ -4,9 +4,8 @@ addpath pulseq/matlab
 warning('OFF', 'mr:restoreShape');  % turn off Pulseq warning for spirals
 
 % get toolbox to convert .seq file to a PulCeq (Ceq) object
-%system('git clone --branch tv7 git@github.com:HarmonizedMRI/PulCeq.git');
-%addpath PulCeq/matlab
-addpath ~/github/HarmonizedMRI/PulCeq/matlab
+system('git clone --branch tv7 git@github.com:HarmonizedMRI/PulCeq.git');
+addpath PulCeq/matlab
 
 curdir = pwd; cd ~/github/mirt; setup; cd(curdir);
 
