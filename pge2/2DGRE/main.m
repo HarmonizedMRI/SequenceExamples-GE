@@ -69,8 +69,8 @@ if createSequenceFile
     writeceq(ceq, [fn '.pge'], 'pislquant', pislquant);
 
     %---------------------------------------------------------------
-    % Validate ceq against GE XML output (created by WTools/Pulse View).
-    % Useful in MR30.2 and later.
+    % Validate the GE simulator XML output (created by WTools/Pulse View)
+    % against the original .seq file.  For MR30.2 and later.
     %---------------------------------------------------------------
     xmlPath = '~/transfer/xml/';   % directory for Pulse View .xml files
 
