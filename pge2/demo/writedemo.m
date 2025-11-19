@@ -36,7 +36,7 @@ sys = mr.opts('maxGrad', 50/sqrt(3), 'gradUnit','mT/m', ...
               'adcDeadTime', 40e-6, ...     % or 0
               'adcRasterTime', 2e-6, ...    % GE dwell time must be a multiple of 2us
               'rfRasterTime', 4e-6, ...     % 2e-6, or any integer multiple thereof
-              'gradRasterTime', 4e-6, ...   % 4e-6, or any integer multiple thereof
+              'gradRasterTime', 20e-6, ...   % 4e-6, or any integer multiple thereof
               'blockDurationRaster', 4e-6, ... % 4e-6, or any integer multiple thereof
               'B0', 3.0);
 
@@ -171,25 +171,16 @@ end
 % to illustrate arbitrary gradients and rotation events.
 % NB! If any of the blocks inside a segment contains a rotation event,
 % that rotation will be applied to the entire segment!
-dt = sys.gradRasterTime;
-n = 2000;              % number of samples in waveform
-T = n*dt;              % duration of spiral
-t = dt*(1:n) - dt/2;   % sample times at center of raster intervals
-gamp = 20e-3;    % T/m
-r = gamp * t/T;
-th = 4*2*pi/T*t;
-g = r .* exp(1i*th);
-g = [g linspace(g(end), 0, 100)];   % ramp to zero
+T = 8e-3;              % duration of spiral
+t = sys.gradRasterTime*[1:round(T/sys.gradRasterTime)] - sys.gradRasterTime/2;   % sample at center of raster intervals
+g = 20e-3 * t/T .* exp(1i*4*2*pi/T*t);   % T/m
+g = [g linspace(g(end), 0, 100)];        % ramp to zero
 
 sp.gx = mr.makeArbitraryGrad('x', real(g)*sys.gamma, ...  % input in Hz/m
     'Delay', 0, ...
     'system', sys, ...
     'first', 0, 'last', 0);   % values at raster edges
 sp.gy = mr.makeArbitraryGrad('y', imag(g)*sys.gamma, ...  
-    'Delay', sp.gx.delay, ...
-    'system', sys, ...
-    'first', 0, 'last', 0);  
-sp.gz = mr.makeArbitraryGrad('z', imag(g)*sys.gamma, ...  
     'Delay', sp.gx.delay, ...
     'system', sys, ...
     'first', 0, 'last', 0);  
@@ -206,10 +197,10 @@ for ii = 1:Nint
 
     % NB! When executing on a GE scanner, everything else inside this segment also gets rotated!
     % Such as the following trapezoid.
-    % seq.addBlock(mr.scaleGrad(gx, 1));   % Unsafe! Will get rotated along with the spiral!
+    % seq.addBlock(mr.scaleGrad(gx, 1));   % Probably a bad idea! Will get rotated along with the spiral!
 
-    % However, the following is ok in this particular case since the rotation is about the z-axis
-    % and so gz is unaffected in practice and can belong to the same segment as the spiral.
+    % However, the following is ok in this case since the rotation is about the z-axis,
+    % so gz is unaffected and can belong to the same segment as the spiral.
     seq.addBlock(gz);   
 end
 
@@ -220,6 +211,10 @@ seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique positive int
 seq.addBlock(mr.makeDelay(1));  % pure delay block
 seq.addBlock(adc);
 seq.addBlock(mr.makeDelay(5e-3)); % make room for psd_grd_wait (gradient/ADC delay) and ADC ringdown
+
+% A segment can even be empty
+seq.addBlock(mr.makeLabel('SET', 'TRID', 49)); 
+seq.addBlock(mr.makeDelay(1e-3));
 
 %% Check sequence timing
 [ok, error_report] = seq.checkTiming;
