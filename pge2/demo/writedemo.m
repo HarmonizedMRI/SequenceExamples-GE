@@ -1,42 +1,45 @@
 % writedemo.m
 %
-% 'Official' demo/learning sequence for Pulseq on GE 
-% using the community-developed pge2 interpreter
+% "Official" demo/learning sequence for Pulseq on GE, using the
+% community-developed pge2 interpreter
 % (https://github.com/GEHC-External/pulseq-ge-interpreter).
 %
-% Demonstrates the following:
-%  - good coding practices for writing a Pulseq sequence in a GE-friendly way
-%  - two different ADC events with different bandwidth and resolution
-%  - empty blocks (zero duration) containing nothing but a (TRID) label
-%  - two kinds of delay blocks: 
-%    (1) those with constant duration throughout the scan. 
-%        The pge2 interpreter implements these by simply 
-%        moving the time marker within the segment.
-%    (2) those with variable duration throughout the scan. 
-%        The pge2 interpreter implements these by creating a WAIT pulse
-%        whose duration varies dynamically as specified in the ceq.loop array.
-%    It is good to be aware of the difference, since the presence of WAIT pulses
-%    can potentially interfere with other nearby Pulseq events (RF and ADC).
-%    Varying the duration of a pure delay block does not require a new TRID to be assigned.
-%  - 'noise scans': segments consisting of nothing but an ADC event and delays 
-%
-% See also ../README.md
+% This script demonstrates:
+%   - Recommended coding practices for writing Pulseq sequences in a
+%     GE-compatible way.
+%   - Use of two ADC events with different bandwidths and resolutions.
+%   - Empty (zero-duration) blocks that contain only a TRID label.
+%   - Two types of delay blocks:
+%       (1) Constant-duration delays:
+%           Implemented by pge2 by shifting the internal time marker within
+%           the segment.
+%       (2) Variable-duration delays:
+%           Implemented by pge2 via a WAIT pulse, whose duration is set
+%           dynamically from the values in the ceq.loop array.
+%           Important note: WAIT pulses can interact with nearby Pulseq
+%           events (e.g., RF and ADC), so it is useful to recognize when
+%           they are being created.
+%           Changing the duration of a pure delay block does *not* require
+%           assigning a new TRID.
+%   - "Noise scans": segments containing only an ADC event and delay blocks.
 
 % System/design parameters.
-% Since the block boundaries 'disappear' inside a segment,
-% it is often desirable to set dead/ringdown times to 0 to keep
-% the +mr toolbox from silently inserting delays where you don't expect them. 
-% The following values do not have to match the actual hardware limits.
-% Reduce gradients by 1/sqrt(3) to allow for oblique scans.
-% Note that the function pge2.check() checks PNS for you.
+% Because block boundaries “disappear” inside a segment, it is often useful
+% to set dead time and ringdown time to zero. This prevents the +mr toolbox
+% from silently inserting delays you may not intend.
+%
+% The parameter values below do not need to match the actual hardware limits.
+% Gradient amplitudes are reduced by 1/sqrt(3) to accommodate oblique scans.
+%
+% Note: pge2.check() performs PNS verification automatically.
 sys = mr.opts('maxGrad', 50/sqrt(3), 'gradUnit','mT/m', ...
               'maxSlew', 120/sqrt(3), 'slewUnit', 'T/m/s', ...
               'rfDeadTime', 100e-6, ...     % or 0
               'rfRingdownTime', 60e-6, ...  % or 0
               'adcDeadTime', 40e-6, ...     % or 0
               'adcRasterTime', 2e-6, ...    % GE dwell time must be a multiple of 2us
-              'rfRasterTime', 4e-6, ...     % 2e-6, or any integer multiple thereof
-              'gradRasterTime', 20e-6, ...   % 4e-6, or any integer multiple thereof
+              'rfRasterTime', 4e-6, ...        % 2e-6, or any integer multiple thereof
+              'gradRasterTime', 4e-6, ...      % 4e-6, or any integer multiple thereof
               'blockDurationRaster', 4e-6, ... % 4e-6, or any integer multiple thereof
               'B0', 3.0);
 
@@ -76,13 +79,17 @@ peScales = phaseAreas/gyPre.area;
 gxSpoil = mr.makeTrapezoid('x', 'Area', 2*Nx*deltak, 'system', sys);
 gzSpoil = mr.makeTrapezoid('z', 'Area', 4/sliceThickness, 'system', sys);
 
-% Done creating events. These will become the 'base blocks' in the Ceq sequence representation.
-% Next, define the scan loop, where we will NOT define any new events, since any events
-% defined on the fly *might* differ from those defined above in sometimes subtle ways.
-% The only exception is that it is safe to create pure delay blocks with mr.makeDelay(), 
-% to vary the timing dynamically in the scan loop (see example below).
+% Done creating events for the SPGR/FLASH portion of the sequence. 
+% These will serve as the “base blocks” in the Ceq sequence representation.
+%
+% Next, define the scan loop. We intentionally avoid creating new events
+% inside the loop, because events generated on the fly can differ—sometimes
+% subtly—from those defined above.
+%
+% The only exception is pure delay blocks created with mr.makeDelay(), which
+% are safe to generate dynamically to adjust timing during the scan loop
+% (see example below).
 
-%% Now we build the sequence by calling seq.addBlock() 
 
 % 2D spin-warp (Cartesian) SPGR/FLASH sequence
 % iY <= -pislquant        Dummy shots to reach steady state
@@ -105,27 +112,29 @@ for iY = (-nDummyShots-pislquant+1):Ny
     rf_inc = mod(rf_inc+rfSpoilingInc, 360.0);
     rf_phase = mod(rf_phase+rf_inc, 360.0);
 
-    % Mark start of segment instance (block group) by adding TRID label.
-    % The TRID can be any postivie integer, but must be unique to each segment.
-    % Subsequent blocks in block group are NOT labelled (this is akin to 
-    % the use of SEQLENGTH in EPIC to define segments/cores).
-    % The TRID label can belong to a block with zero or more other events.
+    % Mark the start of a segment instance (block group) by adding a TRID label.
+    % TRID may be any positive integer, but it must be unique for each segment.
+    % Only the first block in the block group is labeled; subsequent blocks are
+    % unlabeled (similar to how SEQLENGTH defines segments/cores in EPIC).
+    % A TRID label can be attached to a block that contains zero or more events.
     %
-    % Note the distinction here between 'segment' and 'segment instance':
-    %  'segment': a virtual segment definition, represented in hardware 
-    %             using normalized waveform amplitudes. So it is 'virtual'
-    %             in the sense that it hasn't been assigned physical amplitudes/units,
-    %             but it is very real since it is physically implemented in hardware!
-    %             The TRID label marks a virtual segment.
-    %  'segment instance': one execution/instance of a segment, with amplitudes
-    %             in physical units (G/cm, etc). Each segment instance is associated
-    %             with the TRID of the virtual segment it is an instance of. 
-    %             The different segment instances contain the same sequence of blocks,
-    %             except (generally) with different values of the following properties:
-    %              - RF and gradient waveform amplitude
-    %              - RF frequency offset
-    %              - RF/ADC phase offsets
-    %              - duration of pure delay blocks (see below)
+    % Important distinction between 'segment' and 'segment instance':
+    %
+    %   segment:
+    %       A virtual segment definition represented in hardware using normalized
+    %       waveform amplitudes. It is “virtual” because the amplitudes have not yet
+    %       been assigned physical units, yet it is ultimately realized on hardware.
+    %       The TRID label identifies this virtual segment.
+    %
+    %   segment instance:
+    %       One execution of a virtual segment, with amplitudes expressed in
+    %       physical units (e.g., G/cm). Each instance is tied to the TRID of the
+    %       virtual segment it represents. All instances have the same sequence of
+    %       blocks, but typically differ in:
+    %           - RF and gradient waveform amplitudes
+    %           - RF frequency offset
+    %           - RF/ADC phase offsets
+    %           - Durations of pure delay blocks (see below)
     seq.addBlock(mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
     seq.addBlock(rf, gz);   % excitation block
     % Alternative:
@@ -167,7 +176,7 @@ for iY = (-nDummyShots-pislquant+1):Ny
     % We're now at the end of a segment instance
 end
 
-% Play a rotated spiral gradient, 
+% Add on a few rotated spiral gradients, 
 % to illustrate arbitrary gradients and rotation events.
 % NB! If any of the blocks inside a segment contains a rotation event,
 % that rotation will be applied to the entire segment!
@@ -193,28 +202,24 @@ for ii = 1:Nint
     th = angle(exp(1i*th));   % wrap to [-pi pi] range
     rot = mr.makeRotation([0 0 1], th);  % rotation event. axis-angle notation
     seq.addBlock(sp.gx, sp.gy, rot);
-    %seq.addBlock(mr.makeDelay(1e-3));
 
-    % NB! When executing on a GE scanner, everything else inside this segment also gets rotated!
-    % Such as the following trapezoid.
-    % seq.addBlock(mr.scaleGrad(gx, 1));   % Probably a bad idea! Will get rotated along with the spiral!
-
-    % However, the following is ok in this case since the rotation is about the z-axis,
-    % so gz is unaffected and can belong to the same segment as the spiral.
-    seq.addBlock(gz);   
+    % NB: On a GE scanner, the rotation applies to the entire segment. This means
+    % any gradients added within the same segment, e.g.,
+    %     seq.addBlock(mr.scaleGrad(gx, 1));
+    % will also be rotated along with the spiral, which is usually not desired.
+    %
+    % In this example, adding gz is safe because the rotation is about the z-axis,
+    % so the z-gradient is unaffected and can reside in the same segment as the spiral.
+    seq.addBlock(gz);
 end
 
-% Insert noise measurement
+% Insert noise scan.
 % For this we need to define a different sub-sequence (segment),
-% so we again need to label start of segment instance with a new unique TRID
+% so we again need to label start of segment instance with a new unique TRID.
 seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique positive int
 seq.addBlock(mr.makeDelay(1));  % pure delay block
 seq.addBlock(adc);
 seq.addBlock(mr.makeDelay(5e-3)); % make room for psd_grd_wait (gradient/ADC delay) and ADC ringdown
-
-% A segment can even be empty
-seq.addBlock(mr.makeLabel('SET', 'TRID', 49)); 
-seq.addBlock(mr.makeDelay(1e-3));
 
 %% Check sequence timing
 [ok, error_report] = seq.checkTiming;
