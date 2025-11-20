@@ -22,13 +22,16 @@
 %
 % See also ../README.md
 
-% System/design parameters.
-% Since the block boundaries 'disappear' inside a segment,
-% it is often desirable to set dead/ringdown times to 0 to keep
-% the +mr toolbox from silently inserting delays where you don't expect them. 
-% The following values do not have to match the actual hardware limits.
-% Reduce gradients by 1/sqrt(3) to allow for oblique scans.
-% Note that the function pge2.check() checks PNS for you.
+% System parameters for sequence design.
+%
+% Because block boundaries are invisible inside a segment, it is often best
+% to set the dead time and ringdown time to zero. Otherwise, the +mr toolbox
+% may silently insert delays that you did not intend.
+%
+% These values do not need to match the actual hardware limits.
+%
+% Gradients are reduced by a factor of 1/sqrt(3) to accommodate oblique
+% orientations.
 sys = mr.opts('maxGrad', 50/sqrt(3), 'gradUnit','mT/m', ...
               'maxSlew', 120/sqrt(3), 'slewUnit', 'T/m/s', ...
               'rfDeadTime', 100e-6, ...     % or 0
@@ -112,19 +115,23 @@ for iY = (-nDummyShots-pislquant+1):Ny
     % The TRID label can belong to a block with zero or more other events.
     %
     % Note the distinction here between 'segment' and 'segment instance':
-    %  'segment': a virtual segment definition, represented in hardware 
-    %             using normalized waveform amplitudes. So it is 'virtual'
-    %             in the sense that it hasn't been assigned physical amplitudes/units,
-    %             but it is very real since it is physically implemented in hardware!
-    %  'segment instance': one executation/instance of a segment, with amplitudes
-    %             in physical units (G/cm, etc). Each segment instance is associated
-    %             with the TRID of the virtual segment it is an instance of. 
-    %             The different segment instances contain the same sequence of blocks,
-    %             except (generally) with different values of the following properties:
-    %              - RF and gradient waveform amplitude
-    %              - RF frequency offset
-    %              - RF/ADC phase offsets
-    %              - duration of pure delay blocks (see below)
+    %
+    %  'segment': 
+    %       A virtual segment definition, represented in hardware 
+    %       using normalized waveform amplitudes. So it is 'virtual'
+    %       in the sense that it hasn't been assigned physical amplitudes/units,
+    %       but it is very real since it is physically implemented in hardware!
+    %
+    %  'segment instance': 
+    %       One executation/instance of a segment, with amplitudes
+    %       in physical units (G/cm, etc). Each segment instance is associated
+    %       with the TRID of the virtual segment it is an instance of. 
+    %       The different segment instances contain the same sequence of blocks,
+    %       except (generally) with different values of the following properties:
+    %          - RF and gradient waveform amplitude
+    %          - RF frequency offset
+    %          - RF/ADC phase offsets
+    %          - duration of pure delay blocks (see below)
     seq.addBlock(mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
     seq.addBlock(rf, gz);   % excitation block
     % Alternative:
