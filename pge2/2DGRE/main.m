@@ -29,7 +29,7 @@ if createSequenceFile
     b1_max   = 0.25;         % Gauss
     g_max    = 5;            % Gauss/cm
     slew_max = 20;           % Gauss/cm/ms
-    coil     = 'xrm';        % 'hrmbuhp' (UHP), 'xrm' (MR750), ...
+    coil     = 'xrm';        % See pge2.opts(). 'xrm' (MR750), 'hrmw' (Premier), 'magnus', ...
 
     sysGE = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, coil);
 
