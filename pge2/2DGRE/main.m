@@ -38,7 +38,7 @@ if createSequenceFile
     % (gradient heating, SAR, and other RF checks are evaluated by the
     % interpreter at scan time.)
     %---------------------------------------------------------------
-    pge2.check(ceq, sysGE);
+    params = pge2.check(ceq, sysGE);
 
     %---------------------------------------------------------------
     % Plot the ceq sequence
@@ -65,7 +65,7 @@ if createSequenceFile
     % Write Ceq object to .pge file
     % pislquant = # of ADC events used to set Rx gains in Auto Prescan
     %---------------------------------------------------------------
-    writeceq(ceq, [fn '.pge'], 'pislquant', pislquant);
+    pge2.writeceq(ceq, [fn '.pge'], 'pislquant', pislquant, 'params', params);
 
     %---------------------------------------------------------------
     % Validate the GE simulator XML output (created by WTools/Pulse View)

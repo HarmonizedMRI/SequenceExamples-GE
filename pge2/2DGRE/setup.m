@@ -5,6 +5,7 @@ addpath pulseq/matlab
 % get toolbox to convert .seq file to a PulCeq (Ceq) object
 system('git clone --branch tv7 git@github.com:HarmonizedMRI/PulCeq.git');
 addpath PulCeq/matlab
+addpath PulCeq/matlab/DataHash
 
 % To load the ScanArchive raw data files you will need the Orchestra toolbox
 % which is available for download at http://weconnect.gehealthcare.com/ 
