@@ -1,6 +1,5 @@
-% 2D GRE Pulseq sequence example for GE
-% This is the 'official' demo sequence and it is a good
-% idea to try it first so you understand the workflow.
+% Create and inspect/validate the sequence files,
+% and reconstruct the data
 
 % actions
 createSequenceFile = true;

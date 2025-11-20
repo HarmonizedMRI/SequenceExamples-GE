@@ -28,8 +28,6 @@
 % to set the dead time and ringdown time to zero. Otherwise, the +mr toolbox
 % may silently insert delays that you did not intend.
 %
-% These values do not need to match the actual hardware limits.
-%
 % Gradients are reduced by a factor of 1/sqrt(3) to accommodate oblique
 % orientations.
 sys = mr.opts('maxGrad', 50/sqrt(3), 'gradUnit','mT/m', ...
