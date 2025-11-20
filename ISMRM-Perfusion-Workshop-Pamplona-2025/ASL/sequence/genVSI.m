@@ -1,5 +1,5 @@
-function [B1, Gz] = genVSI(phi, fov)
-% function [B1, Gz] = genVSI(phi, fov)
+function [B1, Gz] = genVSI(phi, fov, dt)
+% function [B1, Gz] = genVSI(phi, fov, dt)
 %
 % Create Pulseq sequence object containing velocity-selective inversion pulse.
 % Simulate with simVSI.m
@@ -11,6 +11,7 @@ function [B1, Gz] = genVSI(phi, fov)
 % Inputs
 %    phi      [1]     phase at fov/2 produced by unbalanced gradient during each VSI segment [rad]
 %    fov      [1]     cm
+%    dt       [1]     raster time for both rf and gradient [sec]
 %
 % Outputs
 %    B1       [n]     RF waveform, complex [Gauss]
@@ -21,7 +22,8 @@ function [B1, Gz] = genVSI(phi, fov)
 %% Build waveform elements
 
 % raster time (for both rf and gradients)
-dt = 4e-3;   
+% dt = 10e-3;     % ms
+dt = dt*1e3;      % ms
 
 refocus_scheme = 'MLEV'; % 'MLEV' % 'DR180'
 base_pulse =  'sinc_mod'; %'han' %'sinc_mod'   % 'sinc'  % 'hard'; % sech, hard, BIR 
