@@ -5,7 +5,7 @@ function TRIDs = writeASL(sys, sections, fn, TRIDs)
 %
 %  <sat/reset> - delay - <label> - delay - <inversion> - delay - <inversion> - <readout>
 
-endOfSegmentGap = 116e-6;  % gap inserted by interpreter after each segment
+endOfSegmentGap = round(117e-6/sys.gradRasterTime)*sys.gradRasterTime;  % gap inserted by interpreter after each segment
 
 nFrames = 1;   % number of time frames (tag-control pairs)
 
