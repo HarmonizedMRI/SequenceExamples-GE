@@ -98,7 +98,7 @@ switch base_pulse
         
     case 'sech'
         mysech_dur = 3 ;
-        mysech = genSech180(0.1, mysech_dur)';
+        mysech = genSech180(0.1, mysech_dur, dt)';
         mysech_area = sum(mysech * dt);
         mysech =  B1_area180 * mysech / mysech_area;
         mysech = 130e-7 *  mysech/max(abs(mysech)) ;

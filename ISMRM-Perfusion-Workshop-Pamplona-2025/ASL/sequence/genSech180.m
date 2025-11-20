@@ -1,6 +1,6 @@
 
-function mysech = genSech180(sweepWidth, duration)
-% function mysech = genSech180(sweepWidth, duration)
+function mysech = genSech180(sweepWidth, duration, dt)
+% function mysech = genSech180(sweepWidth, duration, dt)
 % duration in ms
 % sweepWidth is in kHz
 % 
@@ -10,7 +10,7 @@ function mysech = genSech180(sweepWidth, duration)
 % k = 1;
 %
 
-dt = 4e-3;
+%dt = 4e-3;
 sech_dur = duration;
 sechlen = sech_dur / dt;
 
