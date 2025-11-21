@@ -4,7 +4,7 @@ This is the 'official' demo sequence, and it’s a good idea to run it first so 
 Be sure to read through **main.m** and **write2DGRE.m** carefully, including all comments.
 
 Use this demo with the most recent version of the 
-**[pge2 interpreter](https://github.com/GEHC-External/pulseq-ge-interpreter )**.
+**[pge2 interpreter](https://github.com/GEHC-External/pulseq-ge-interpreter)**.
 
 
 To download the required MATLAB packages, generate the pge sequence file, and reconstruct the data, see **setup.m** and **main.m** in this folder.
