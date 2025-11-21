@@ -38,7 +38,8 @@ if createSequenceFile
     % (gradient heating, SAR, and other RF checks are evaluated by the
     % interpreter at scan time.)
     %---------------------------------------------------------------
-    params = pge2.check(ceq, sysGE);
+    pnsWeights = [1 1 1];   % directional PNS weights, see pge2.pns()
+    params = pge2.check(ceq, sysGE, 'wt', pnsWeights);
 
     %---------------------------------------------------------------
     % Plot the ceq sequence
