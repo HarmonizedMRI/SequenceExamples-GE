@@ -47,7 +47,7 @@ see the [2DGRE](./2DGRE/) example in this folder.
     2. Inspect and check the sequence with `pge2.plot()', `pge2.check()`, and `pge2.validate()`.
     3. Write the .pge file:
     ```
-    >> writeceq(ceq, 'gre2d.pge');
+    >> pge2.writeceq(ceq, 'gre2d.pge', 'sysGE', sysGE);
     ```
 3. Execute the .pge file on the scanner using the pge2 interpreter.
 
@@ -234,7 +234,7 @@ GE sequences are built on the idea that there is a small set of pre-defined RF/g
 that repeat many times throughout the sequence except with (possibly) varying amplitudes,
 phase offsets, or (gradient) rotation;
 these pre-defined events give rise to the base blocks described above.
-It is therefore highly recommended to define events once, and then use mr.scaleGrad() to scale
+It is therefore highly recommended to define events once, and then use `mr.scaleGrad()` to scale
 them as needed inside the main loop.
 This ensures proper detection of the base blocks during the seq2ceq.m conversion stage;
 if creating independent events inside the main loop using repeated calls to, e.g., `mr.makeTrapezoid()`, the
