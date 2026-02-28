@@ -14,12 +14,12 @@ if createSequenceFile
     %---------------------------------------------------------------
     % Write the .seq file
     %---------------------------------------------------------------
-    write2DGRE;
+%    write2DGRE;
 
     %---------------------------------------------------------------
-    % Convert .seq file to a Ceq object
+    % Convert .seq file to a PulSeg sequence (psq) object
     %---------------------------------------------------------------
-    psq = seq2ceq([fn '.seq']);   % ,'usesRotationEvents', false);
+    psq = pulseg.fromSeq([fn '.seq']);   % ,'usesRotationEvents', false);
 
     %---------------------------------------------------------------
     % Define hardware parameters for your scanner
@@ -38,13 +38,14 @@ if createSequenceFile
     % (gradient heating, SAR, and other RF checks are evaluated by the
     % interpreter at scan time.)
     %---------------------------------------------------------------
-    pnsWeights = [1 1 1];   % directional PNS weights, see pge2.pns()
-    params = pge2.check(psq, sysGE, 'wt', pnsWeights);
+    PNSwt = [1 1 1];   % directional PNS weights, see pge2.pns()
+    params = pge2.check(psq, sysGE, 'PNSwt', PNSwt);
 
     %---------------------------------------------------------------
     % Plot the psq sequence
     %---------------------------------------------------------------
     S = pge2.plot(psq, sysGE, 'blockRange', [1 2], 'rotate', false, 'interpolate', false);
+    return
     S = pge2.plot(psq, sysGE, 'timeRange',  [0 0.02], 'rotate', true);
 
     %---------------------------------------------------------------
@@ -63,10 +64,10 @@ if createSequenceFile
     pge2.validate(psq, sysGE, seq, [], 'row', 1000, 'plot', true);
 
     %---------------------------------------------------------------
-    % Write Ceq object to .pge file
+    % Write PulSeg object to .pge file
     % pislquant = # of ADC events used to set Rx gains in Auto Prescan
     %---------------------------------------------------------------
-    pge2.writeceq(psq, [fn '.pge'], 'pislquant', pislquant, 'params', params);
+    pge2.serialize(psq, [fn '.pge'], 'pislquant', pislquant, 'params', params);
 
     %---------------------------------------------------------------
     % Validate the GE simulator XML output (created by WTools/Pulse View)
