@@ -2,10 +2,17 @@
 system('git clone --branch v1.5.1 git@github.com:pulseq/pulseq.git');
 addpath pulseq/matlab
 
-% get toolbox to convert .seq file to a PulCeq (Ceq) object
-system('git clone git@github.com:HarmonizedMRI/PulCeq.git');
-addpath PulCeq/matlab
-addpath PulCeq/matlab/DataHash
+% get toolbox to convert .seq file to a PulSeg sequence (psq) object
+system('git clone git@github.com:HarmonizedMRI/pulseg.git');
+addpath pulseg/matlab
+addpath(genpath('pulseg/matlab/third_party'));
+
+% get toolbox for plotting psq object and exporting to binary file for GE 
+%system('git clone git@github.com:HarmonizedMRI/pge2.git');
+addpath ~/github/HarmonizedMRI/pge2/matlab
+
+return
+
 
 % To load the ScanArchive raw data files you will need the Orchestra toolbox
 % which is available for download at http://weconnect.gehealthcare.com/ 
