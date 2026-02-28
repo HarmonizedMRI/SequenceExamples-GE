@@ -19,7 +19,7 @@ if createSequenceFile
     %---------------------------------------------------------------
     % Convert .seq file to a Ceq object
     %---------------------------------------------------------------
-    ceq = seq2ceq([fn '.seq']);   % ,'usesRotationEvents', false);
+    psq = seq2ceq([fn '.seq']);   % ,'usesRotationEvents', false);
 
     %---------------------------------------------------------------
     % Define hardware parameters for your scanner
@@ -39,34 +39,34 @@ if createSequenceFile
     % interpreter at scan time.)
     %---------------------------------------------------------------
     pnsWeights = [1 1 1];   % directional PNS weights, see pge2.pns()
-    params = pge2.check(ceq, sysGE, 'wt', pnsWeights);
+    params = pge2.check(psq, sysGE, 'wt', pnsWeights);
 
     %---------------------------------------------------------------
-    % Plot the ceq sequence
+    % Plot the psq sequence
     %---------------------------------------------------------------
-    S = pge2.plot(ceq, sysGE, 'blockRange', [1 2], 'rotate', false, 'interpolate', false);
-    S = pge2.plot(ceq, sysGE, 'timeRange',  [0 0.02], 'rotate', true);
+    S = pge2.plot(psq, sysGE, 'blockRange', [1 2], 'rotate', false, 'interpolate', false);
+    S = pge2.plot(psq, sysGE, 'timeRange',  [0 0.02], 'rotate', true);
 
     %---------------------------------------------------------------
-    % Validate ceq representation against the original .seq file
+    % Validate psq representation against the original .seq file
     %---------------------------------------------------------------
     seq = mr.Sequence();
     seq.read([fn '.seq']);
 
     % Cycle through all segment instances and stop on first mismatch
-    pge2.validate(ceq, sysGE, seq, [], 'row', [], 'plot', false);
+    pge2.validate(psq, sysGE, seq, [], 'row', [], 'plot', false);
 
     % Plot each segment instance before proceeding
-    pge2.validate(ceq, sysGE, seq, [], 'row', [], 'plot', true);
+    pge2.validate(psq, sysGE, seq, [], 'row', [], 'plot', true);
 
     % Check only segments beginning at/after block 1000
-    pge2.validate(ceq, sysGE, seq, [], 'row', 1000, 'plot', true);
+    pge2.validate(psq, sysGE, seq, [], 'row', 1000, 'plot', true);
 
     %---------------------------------------------------------------
     % Write Ceq object to .pge file
     % pislquant = # of ADC events used to set Rx gains in Auto Prescan
     %---------------------------------------------------------------
-    pge2.writeceq(ceq, [fn '.pge'], 'pislquant', pislquant, 'params', params);
+    pge2.writeceq(psq, [fn '.pge'], 'pislquant', pislquant, 'params', params);
 
     %---------------------------------------------------------------
     % Validate the GE simulator XML output (created by WTools/Pulse View)
@@ -74,7 +74,7 @@ if createSequenceFile
     %---------------------------------------------------------------
     xmlPath = '~/transfer/xml/';   % directory for Pulse View .xml files
 
-    pge2.validate(ceq, sysGE, seq, xmlPath, 'row', [], 'plot', true);
+    pge2.validate(psq, sysGE, seq, xmlPath, 'row', [], 'plot', true);
 
     % Coming soon: Check mechanical resonances (forbidden frequency bands)
 end
