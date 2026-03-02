@@ -49,7 +49,7 @@ gz.channel = 'x';
 gzReph.channel = 'x';
 
 % Simulate slice profile
-
+pulseqBlochSim({{rf,gz}, {[],gzReph}}, sys, [fov fov fov]);
 
 % Define other gradients and ADC events.
 % Define them once here, then scale amplitudes as needed in the scan loop.
