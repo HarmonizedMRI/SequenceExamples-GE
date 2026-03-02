@@ -19,9 +19,9 @@ sys = mr.opts('maxGrad', 30/sqrt(3), 'gradUnit','mT/m', ...
 seq = mr.Sequence(sys);             
 
 % Acquisition parameters 
-TR = 0.1;                             % sec
-fov = 180e-3; 
-Nx = 2*180; Ny = 32;                % 
+TR = 0.5;                             % sec
+fov = 220e-3; 
+Nx = 2*220; Ny = 32;                % 
 dwell = 20e-6;                      % ADC sample time (s)
 sliceThickness = 5e-3;              % slice thickness (m)
 rfSpoilingInc = 117;                % RF spoiling increment
@@ -29,7 +29,23 @@ rfSpoilingInc = 117;                % RF spoiling increment
 t_pre = 2e-3; % duration of x pre-phaser
 
 % RF pulse
-load rf
+%load rf
+sys2 = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
+              'maxSlew', 130, 'slewUnit', 'T/m/s', ...
+              'rfDeadTime', 100e-6, ...     % or 0
+              'rfRingdownTime', 60e-6, ...  % or 0
+              'adcDeadTime', 40e-6, ...     % or 0
+              'adcRasterTime', 2e-6, ...    % GE dwell time must be a multiple of 2us
+              'rfRasterTime', 4e-6, ...     % 2e-6, or any integer multiple thereof
+              'gradRasterTime', 4e-6, ...   % 4e-6, or any integer multiple thereof
+              'blockDurationRaster', 4e-6, ... % 4e-6, or any integer multiple thereof
+              'B0', 3.0);
+
+ [rf, gz] = mr.makeSincPulse(10*pi/180, 'Duration', 4e-3, ...
+                            'SliceThickness', 5e-2, 'apodization', 0.42, ...
+                            'use', 'excitation', ...
+                            'timeBwProduct', 8, 'system', sys2);
+gzReph = mr.makeTrapezoid('z', sys, 'Area', -gz.area/2, 'system', sys2);
 gz.channel = 'x';
 gzReph.channel = 'x';
 
