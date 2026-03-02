@@ -19,7 +19,7 @@ sys = mr.opts('maxGrad', 30/sqrt(3), 'gradUnit','mT/m', ...
 seq = mr.Sequence(sys);             
 
 % Acquisition parameters 
-TR = 1;                             % sec
+TR = 0.1;                             % sec
 fov = 180e-3; 
 Nx = 2*180; Ny = 32;                % 
 dwell = 20e-6;                      % ADC sample time (s)
