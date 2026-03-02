@@ -45,7 +45,6 @@ if createSequenceFile
     % Plot the psq sequence
     %---------------------------------------------------------------
     S = pge2.plot(psq, sysGE, 'blockRange', [1 2], 'rotate', false, 'interpolate', false);
-    return
     S = pge2.plot(psq, sysGE, 'timeRange',  [0 0.02], 'rotate', true);
 
     %---------------------------------------------------------------
