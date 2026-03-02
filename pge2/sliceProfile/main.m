@@ -2,12 +2,10 @@
 % and reconstruct the data
 
 % actions
-createSequenceFile = true;
-reconstruct = false;
+createSequenceFile = 0;
+reconstruct =        1;
 
 fn = 'sliceprofile';       % Pulseq file name (without the .seq extension)
-
-pislquant = 10;     % number of shots/ADC events used for receive gain calibration
 
 if createSequenceFile
 
@@ -92,7 +90,7 @@ if reconstruct
     % read first phase-encode of first echo
     currentControl = GERecon('Archive.Next', archive);
     [nx1 nc] = size(currentControl.Data);
-    ny1 = nx1;
+    ny1 = 32;
     d1 = zeros(nx1, nc, ny1);
     d1(:,:,1) = currentControl.Data;
 
@@ -101,6 +99,8 @@ if reconstruct
         currentControl = GERecon('Archive.Next', archive);
         d1(:,:,iy) = currentControl.Data;
     end
+
+    %d1 = d1(:,:,end-31:end);
 
     % do inverse fft and display
     d1 = permute(d1, [1 3 2]);   % [nx1 nx1 nc]

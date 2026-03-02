@@ -19,7 +19,7 @@ sys = mr.opts('maxGrad', 30/sqrt(3), 'gradUnit','mT/m', ...
 seq = mr.Sequence(sys);             
 
 % Acquisition parameters 
-TR = 0.5;                             % sec
+TR = 0.05;                             % sec
 fov = 220e-3; 
 Nx = 2*220; Ny = 32;                % 
 dwell = 20e-6;                      % ADC sample time (s)
@@ -40,14 +40,16 @@ sys2 = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
               'blockDurationRaster', 4e-6, ... % 4e-6, or any integer multiple thereof
               'B0', 3.0);
 
- [rf, gz] = mr.makeSincPulse(10*pi/180, 'Duration', 4e-3, ...
-                            'SliceThickness', 5e-2, 'apodization', 0.42, ...
+ [rf, gz] = mr.makeSincPulse(90*pi/180, 'Duration', 4e-3, ...
+                            'SliceThickness', sliceThickness, 'apodization', 0.42, ...
                             'use', 'excitation', ...
                             'timeBwProduct', 8, 'system', sys2);
 gzReph = mr.makeTrapezoid('z', sys, 'Area', -gz.area/2, 'system', sys2);
-load rf
 gz.channel = 'x';
 gzReph.channel = 'x';
+
+% Simulate slice profile
+
 
 % Define other gradients and ADC events.
 % Define them once here, then scale amplitudes as needed in the scan loop.
