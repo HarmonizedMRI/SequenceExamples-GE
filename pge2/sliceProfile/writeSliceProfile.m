@@ -23,13 +23,12 @@ TR = 0.5;                             % sec
 fov = 220e-3; 
 Nx = 2*220; Ny = 32;                % 
 dwell = 20e-6;                      % ADC sample time (s)
-sliceThickness = 5e-3;              % slice thickness (m)
+sliceThickness = fov/4;             % slice thickness (m)
 rfSpoilingInc = 117;                % RF spoiling increment
 
 t_pre = 2e-3; % duration of x pre-phaser
 
 % RF pulse
-%load rf
 sys2 = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
               'maxSlew', 130, 'slewUnit', 'T/m/s', ...
               'rfDeadTime', 100e-6, ...     % or 0
@@ -46,6 +45,7 @@ sys2 = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
                             'use', 'excitation', ...
                             'timeBwProduct', 8, 'system', sys2);
 gzReph = mr.makeTrapezoid('z', sys, 'Area', -gz.area/2, 'system', sys2);
+load rf
 gz.channel = 'x';
 gzReph.channel = 'x';
 
