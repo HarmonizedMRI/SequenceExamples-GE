@@ -13,7 +13,7 @@ addpath pge2/matlab
 
 % To load the ScanArchive raw data files you will need the Orchestra toolbox
 % which is available for download at http://weconnect.gehealthcare.com/ 
-addpath ~/Programs/orchestra-sdk-2.1-1.matlab/
+% addpath ~/Programs/orchestra-sdk-2.1-1.matlab/
 
 % get 'im' display function (optional)
 system('git clone --depth 1 git@github.com:JeffFessler/mirt.git');
