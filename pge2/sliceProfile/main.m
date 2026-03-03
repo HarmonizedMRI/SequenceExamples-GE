@@ -2,8 +2,8 @@
 % and reconstruct the data
 
 % actions
-createSequenceFile = 0;
-reconstruct =        1;
+createSequenceFile = 1;
+reconstruct =        0;
 
 fn = 'sliceprofile';       % Pulseq file name (without the .seq extension)
 
@@ -36,18 +36,18 @@ if createSequenceFile
     % (gradient heating, SAR, and other RF checks are evaluated by the
     % interpreter at scan time.)
     %---------------------------------------------------------------
-    PNSwt = [1 1 1];   % directional PNS weights, see pge2.pns()
+    PNSwt = 0*[1 1 1];   % directional PNS weights, see pge2.pns()
     params = pge2.check(psq, sysGE, 'PNSwt', PNSwt);
 
     %---------------------------------------------------------------
-    % Plot the psq sequence
+    % Plot the psq sequence (optional)
     %---------------------------------------------------------------
     %S = pge2.plot(psq, sysGE, 'blockRange', [1 2], 'rotate', false, 'interpolate', false);
     %S = pge2.plot(psq, sysGE, 'timeRange',  [0 0.02], 'rotate', true);
 
-    %---------------------------------------------------------------
-    % Validate psq representation against the original .seq file
-    %---------------------------------------------------------------
+    %-----------------------------------------------------------------------
+    % Validate psq representation against the original .seq file (optional)
+    %-----------------------------------------------------------------------
     seq = mr.Sequence();
     seq.read([fn '.seq']);
 
@@ -65,9 +65,9 @@ if createSequenceFile
     % x/y/zloc are obtained from the User CVs menu on the console.
     % pislquant = # of ADC events used to set Rx gains in Auto Prescan
     %---------------------------------------------------------------
-    xloc = 0;
-    yloc = 0;
-    zloc = 0;   % m
+    %xloc = 0;
+    %yloc = 0;
+    %zloc = 0;   % m
     %psq = pge2.translateFOVrf(psq, [0 0 0]);
     pge2.serialize(psq, [fn '.pge'], 'pislquant', 10, 'params', params, 'checkHash', false);
 
