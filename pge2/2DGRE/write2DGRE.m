@@ -20,6 +20,9 @@
 %    Varying the duration of a pure delay block does not require a new TRID to be assigned.
 %  - 'noise scans': segments consisting of nothing but an ADC event and delays 
 %
+% Variable naming follows pyPulseq style guide, 
+% https://github.com/imr-framework/pypulseq/blob/master/examples/scripts/STYLE_GUIDE.md
+%
 % See also ../README.md
 
 % System parameters for sequence design.
@@ -45,38 +48,40 @@ sys = mr.opts('maxGrad', 50/sqrt(3), 'gradUnit','mT/m', ...
 seq = mr.Sequence(sys);             
 
 % Acquisition parameters 
-% The second echo has matrix size [Nx/2 Ny] and dwell time 40e-6
-fov = 240e-3; 
-Nx = 192; Ny = 192;                 % 
+% The second echo has matrix size [n_x/2 n_y] and dwell time 40e-6
+fov_x = 240e-3; 
+fov_y = fov_x;
+n_x = 192; n_y = 192;                 % 
 dwell = 20e-6;                      % ADC sample time (s)
-sliceThickness = 5e-3;              % slice thickness (m)
+slice_thickness = 5e-3;              % slice thickness (m)
 alpha = 6;                          % flip angle (degrees)
-delayTR = 5e-3;                     % for demonstrating variable delays
-rfSpoilingInc = 117;                % RF spoiling increment
+tr_delay = 5e-3;                     % for demonstrating variable delays
+rf_spoiling_increment = 117;                % RF spoiling increment
 
 t_pre = 1e-3; % duration of x pre-phaser
 
 % Create alpha-degree slice selection pulse and gradient
 [rf, gz] = mr.makeSincPulse(alpha*pi/180, 'Duration', 3e-3, ...
-    'SliceThickness', sliceThickness, 'apodization', 0.42, ...
+    'SliceThickness', slice_thickness, 'apodization', 0.42, ...
     'use', 'excitation', ...
     'timeBwProduct', 4, 'system', sys);
-gzReph = mr.makeTrapezoid('z', 'Area', -gz.area/2, 'Duration', t_pre, 'system', sys);
+gz_reph = mr.makeTrapezoid('z', 'Area', -gz.area/2, 'Duration', t_pre, 'system', sys);
 % TODO: replace with arbitrary RF waveform to demonstrate setting b1 amplitude correctly
 
 % Define other gradients and ADC events.
 % Define them once here, then scale amplitudes as needed in the scan loop.
-deltak = 1/fov;
-gx = mr.makeTrapezoid('x', 'FlatArea', Nx*deltak, 'FlatTime', Nx*dwell, 'system', sys);
-adc = mr.makeAdc(Nx, 'Duration', gx.flatTime, 'Delay', gx.riseTime, 'system', sys);
-adc2 = mr.makeAdc(Nx/4, 'Duration', gx.flatTime/2, 'Delay', gx.riseTime + gx.flatTime/4, 'system', sys);
-gxPre = mr.makeTrapezoid('x', 'Area', -gx.area/2, 'Duration', t_pre, 'system',sys);
-phaseAreas = ((0:Ny-1)-Ny/2)*deltak;
-gyPre = mr.makeTrapezoid('y', 'Area', max(abs(phaseAreas)), ...
-    'Duration', mr.calcDuration(gxPre), 'system', sys);
-peScales = phaseAreas/gyPre.area;
-gxSpoil = mr.makeTrapezoid('x', 'Area', 2*Nx*deltak, 'system', sys);
-gzSpoil = mr.makeTrapezoid('z', 'Area', 4/sliceThickness, 'system', sys);
+delta_kx = 1/fov_x;
+delta_ky = 1/fov_y;
+gx = mr.makeTrapezoid('x', 'FlatArea', n_x*delta_kx, 'FlatTime', n_x*dwell, 'system', sys);
+adc = mr.makeAdc(n_x, 'Duration', gx.flatTime, 'Delay', gx.riseTime, 'system', sys);
+adc2 = mr.makeAdc(n_x/4, 'Duration', gx.flatTime/2, 'Delay', gx.riseTime + gx.flatTime/4, 'system', sys);
+gx_pre = mr.makeTrapezoid('x', 'Area', -gx.area/2, 'Duration', t_pre, 'system',sys);
+phase_areas = ((0:n_y-1)-n_y/2)*delta_ky;
+gy_pre = mr.makeTrapezoid('y', 'Area', max(abs(phase_areas)), ...
+    'Duration', mr.calcDuration(gx_pre), 'system', sys);
+pe_scales = phase_areas/gy_pre.area;
+gx_spoil = mr.makeTrapezoid('x', 'Area', 2*n_x*delta_kx, 'system', sys);
+gz_spoil = mr.makeTrapezoid('z', 'Area', 4/slice_thickness, 'system', sys);
 
 % Done creating events. These will become the 'base blocks' in the Ceq sequence representation.
 % Next, define the scan loop, where we will NOT define any new events, since any events
@@ -89,22 +94,22 @@ gzSpoil = mr.makeTrapezoid('z', 'Area', 4/sliceThickness, 'system', sys);
 % -10 < iY <= 0    ADC is turned on and used for receive gain calibration on GE
 % iY > 0           Image acquisition
 
-nDummyShots = 20;  % shots to reach steady state
+n_dummy_shots = 20;  % shots to reach steady state
 
 rf_phase = 0;
-rf_inc = 0;
+rf_increment = 0;
 
-TRisSet = false;
-for iY = (-nDummyShots-pislquant+1):Ny
-    isDummyTR = iY <= -pislquant;
-    isReceiveGainCalibrationTR = iY < 1 & iY > -pislquant;
+tr_is_set = false;
+for iY = (-n_dummy_shots-pislquant+1):n_y
+    is_dummy_tr = iY <= -pislquant;
+    is_receive_gain_calibration_tr = iY < 1 & iY > -pislquant;
 
     % Set phase for RF spoiling
     rf.phaseOffset = rf_phase/180*pi;
     adc.phaseOffset = rf_phase/180*pi;
     adc2.phaseOffset = adc.phaseOffset;
-    rf_inc = mod(rf_inc+rfSpoilingInc, 360.0);
-    rf_phase = mod(rf_phase+rf_inc, 360.0);
+    rf_increment = mod(rf_increment+rf_spoiling_increment, 360.0);
+    rf_phase = mod(rf_phase+rf_increment, 360.0);
 
     % Mark start of segment instance (block group) by adding TRID label.
     % The TRID can be any postivie integer, but must be unique to each segment.
@@ -130,17 +135,17 @@ for iY = (-nDummyShots-pislquant+1):Ny
     %          - RF frequency offset
     %          - RF/ADC phase offsets
     %          - duration of pure delay blocks (see below)
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
+    seq.addBlock(mr.makeLabel('SET', 'TRID', 1 + is_dummy_tr + 2*is_receive_gain_calibration_tr));
     seq.addBlock(rf, gz);   % excitation block
     % Alternative:
-    % seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', 1 + isDummyTR + 2*isReceiveGainCalibrationTR));
+    % seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', 1 + is_dummy_tr + 2*is_receive_gain_calibration_tr));
 
     % Slice-select refocus and readout prephasing block
     % Set phase-encode gradients to ~zero while iY < 1
-    pesc = (iY>0) * peScales(max(iY,1));  % phase-encode gradient scaling
+    pesc = (iY>0) * pe_scales(max(iY,1));  % phase-encode gradient scaling
     pesc = pesc + (pesc == 0)*eps;        % non-zero scaling so that the trapezoid shape is preserved in the .seq file
 
-    seq.addBlock(gxPre, mr.scaleGrad(gyPre, pesc), gzReph);
+    seq.addBlock(gx_pre, mr.scaleGrad(gy_pre, pesc), gz_reph);
 
     % Empty blocks with a label is ok -- for now they are ignored by the GE interpreter.
     % These are just dummy examples to make the point.
@@ -148,12 +153,12 @@ for iY = (-nDummyShots-pislquant+1):Ny
     seq.addBlock(mr.makeLabel('SET','AVG', 0));
 
     % Non-flyback 2-echo readout
-    if isDummyTR
+    if is_dummy_tr
         seq.addBlock(gx);
         seq.addBlock(mr.scaleGrad(gx, -1));
     else
         seq.addBlock(gx, adc);
-        if isReceiveGainCalibrationTR
+        if is_receive_gain_calibration_tr
             seq.addBlock(mr.scaleGrad(gx, -1));  % don't acquire 2nd echo during receive gain calibration
         else
             seq.addBlock(mr.scaleGrad(gx, -1), adc2);
@@ -162,23 +167,23 @@ for iY = (-nDummyShots-pislquant+1):Ny
 
     % Spoil and PE rephasing, and TR delay
     % Shift z spoiler position using variable delays, for fun
-    seq.addBlock(gxSpoil, mr.scaleGrad(gyPre, -pesc));
-    dt = 20e-6*max(1,iY);
-    seq.addBlock(mr.makeDelay(dt));
-    seq.addBlock(gzSpoil);
-    seq.addBlock(mr.makeDelay(delayTR-dt));
+    seq.addBlock(gx_spoil, mr.scaleGrad(gy_pre, -pesc));
+    tr_dynamic_delay = 20e-6*max(1,iY);
+    seq.addBlock(mr.makeDelay(tr_dynamic_delay));
+    seq.addBlock(gz_spoil);
+    seq.addBlock(mr.makeDelay(tr_delay-tr_dynamic_delay));
 
-    if ~TRisSet
-        TR = seq.duration;
-        TRisSet = true;
+    if ~tr_is_set
+        tr = seq.duration;
+        tr_is_set = true;
     end
 
     % We're now at the end of a segment instance
 end
 
 %% Noise scans
-nNoiseScans = 5;
-for s = 1:nNoiseScans
+n_noise_scans = 5;
+for s = 1:n_noise_scans
     % Now we need to define a different sub-sequence,
     % so we need to label start of segment instance with a new unique TRID
     seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique positive int
@@ -198,11 +203,11 @@ else
 end
 
 %% Output for execution and plot
-seq.setDefinition('FOV', [fov fov sliceThickness]);
+seq.setDefinition('FOV', [fov_x fov_y slice_thickness]);
 seq.setDefinition('Name', fn);
 seq.write([fn '.seq'])       % Write to pulseq file
 
-seq.plot('timeRange', [0 3]*TR);
+seq.plot('timeRange', [0 3]*tr);
 
 % Done creating the .seq file! 
 % Now you can use the various plot/checks available in the Pulseq toolbox.
