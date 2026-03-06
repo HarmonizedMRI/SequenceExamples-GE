@@ -31,7 +31,7 @@ if createSequenceFile
     slew_max = 20;           % Gauss/cm/ms
     coil     = 'xrm';        % See pge2.opts(). 'xrm' (MR750), 'hrmw' (Premier), 'magnus', ...
 
-    sysGE = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, coil);
+    sys_ge = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, coil);
 
     %---------------------------------------------------------------
     % Check PNS, timing, and b1/gradient limits
@@ -39,13 +39,13 @@ if createSequenceFile
     % interpreter at scan time.)
     %---------------------------------------------------------------
     PNSwt = [1 1 1];   % directional PNS weights, see pge2.pns()
-    params = pge2.check(psq, sysGE, 'PNSwt', PNSwt);
+    params = pge2.check(psq, sys_ge, 'PNSwt', PNSwt);
 
     %---------------------------------------------------------------
     % Plot the psq sequence
     %---------------------------------------------------------------
-    S = pge2.plot(psq, sysGE, 'blockRange', [1 2], 'rotate', false, 'interpolate', false);
-    S = pge2.plot(psq, sysGE, 'timeRange',  [0 0.02], 'rotate', true);
+    S = pge2.plot(psq, sys_ge, 'blockRange', [1 2], 'rotate', false, 'interpolate', false);
+    S = pge2.plot(psq, sys_ge, 'timeRange',  [0 0.02], 'rotate', true);
 
     %---------------------------------------------------------------
     % Validate psq representation against the original .seq file
@@ -54,13 +54,13 @@ if createSequenceFile
     seq.read([fn '.seq']);
 
     % Cycle through all segment instances and stop on first mismatch
-    pge2.validate(psq, sysGE, seq, [], 'row', [], 'plot', false);
+    pge2.validate(psq, sys_ge, seq, [], 'row', [], 'plot', false);
 
     % Plot each segment instance before proceeding
-    pge2.validate(psq, sysGE, seq, [], 'row', [], 'plot', true);
+    pge2.validate(psq, sys_ge, seq, [], 'row', [], 'plot', true);
 
     % Check only segments beginning at/after block 1000
-    pge2.validate(psq, sysGE, seq, [], 'row', 1000, 'plot', true);
+    pge2.validate(psq, sys_ge, seq, [], 'row', 1000, 'plot', true);
 
     %---------------------------------------------------------------
     % Apply slice offset and write PulSeg object to .pge file.
@@ -77,9 +77,9 @@ if createSequenceFile
     % Validate the GE simulator XML output (created by WTools/Pulse View)
     % against the original .seq file.  For MR30.2 and later.
     %---------------------------------------------------------------
-    xmlPath = '~/transfer/xml/';   % directory for Pulse View .xml files
+    xml_path = '~/transfer/xml/';   % directory for Pulse View .xml files
 
-    pge2.validate(psq, sysGE, seq, xmlPath, 'row', [], 'plot', true);
+    pge2.validate(psq, sys_ge, seq, xml_path, 'row', [], 'plot', true);
 
     % Coming soon: Check mechanical resonances (forbidden frequency bands)
 end
