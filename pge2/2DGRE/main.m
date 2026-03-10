@@ -45,7 +45,7 @@ if createSequenceFile
     % Plot the psq sequence
     %---------------------------------------------------------------
     S = pge2.plot(psq, sys_ge, 'blockRange', [1 2], 'rotate', false, 'interpolate', false);
-    S = pge2.plot(psq, sys_ge, 'timeRange',  [0 0.02], 'rotate', true);
+    %S = pge2.plot(psq, sys_ge, 'timeRange',  [0 0.02], 'rotate', true);
 
     %---------------------------------------------------------------
     % Validate psq representation against the original .seq file
@@ -57,10 +57,10 @@ if createSequenceFile
     pge2.validate(psq, sys_ge, seq, [], 'row', [], 'plot', false);
 
     % Plot each segment instance before proceeding
-    pge2.validate(psq, sys_ge, seq, [], 'row', [], 'plot', true);
+    %pge2.validate(psq, sys_ge, seq, [], 'row', [], 'plot', true);
 
     % Check only segments beginning at/after block 1000
-    pge2.validate(psq, sys_ge, seq, [], 'row', 1000, 'plot', true);
+    %pge2.validate(psq, sys_ge, seq, [], 'row', 1000, 'plot', true);
 
     %---------------------------------------------------------------
     % Apply slice offset and write PulSeg object to .pge file.
@@ -69,7 +69,7 @@ if createSequenceFile
     %---------------------------------------------------------------
     xloc = 0;
     yloc = 0;
-    zloc = 3.2e-2;   % m
+    zloc = 0;   % m
     psq = pge2.translateFOVrf(psq, [xloc yloc zloc]);
     pge2.serialize(psq, [fn '.pge'], 'pislquant', 10, 'params', params, 'checkHash', false);
 
@@ -77,9 +77,8 @@ if createSequenceFile
     % Validate the GE simulator XML output (created by WTools/Pulse View)
     % against the original .seq file.  For MR30.2 and later.
     %---------------------------------------------------------------
-    xml_path = '~/transfer/xml/';   % directory for Pulse View .xml files
-
-    pge2.validate(psq, sys_ge, seq, xml_path, 'row', [], 'plot', true);
+    %xml_path = '~/transfer/xml/';   % directory for Pulse View .xml files
+    %pge2.validate(psq, sys_ge, seq, xml_path, 'row', [], 'plot', true);
 
     % Coming soon: Check mechanical resonances (forbidden frequency bands)
 end
