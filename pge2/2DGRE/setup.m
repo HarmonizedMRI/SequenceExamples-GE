@@ -1,5 +1,5 @@
 % get Pulseq toolbox
-system('git clone --branch v1.5.1 git@github.com:pulseq/pulseq.git');
+system('git clone --branch master git@github.com:pulseq/pulseq.git');
 addpath pulseq/matlab
 
 % get toolbox to convert .seq file to a PulSeg sequence (psq) object
