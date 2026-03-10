@@ -111,11 +111,9 @@ for iY = (-n_dummy_shots-pislquant+1):n_y
     rf_increment = mod(rf_increment+rf_spoiling_increment, 360.0);
     rf_phase = mod(rf_phase+rf_increment, 360.0);
 
-    % Mark start of segment instance (block group) by adding TRID label.
-    % The TRID can be any postivie integer, but must be unique to each segment.
+    % Mark start of each segment instance (block group) by adding TRID label.
     % Subsequent blocks in block group are NOT labelled (this is akin to 
     % the use of SEQLENGTH in EPIC to define segments/cores).
-    % The TRID label can belong to a block with zero or more other events.
     %
     % Note the distinction here between 'segment' and 'segment instance':
     %
@@ -135,16 +133,23 @@ for iY = (-n_dummy_shots-pislquant+1):n_y
     %          - RF frequency offset
     %          - RF/ADC phase offsets
     %          - duration of pure delay blocks (see below)
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 1 + is_dummy_tr + 2*is_receive_gain_calibration_tr));
-    seq.addBlock(rf, gz);   % excitation block
+    if is_dummy_tr
+        seq.addTRID('dummy');
+    elseif is_receive_gain_calibration_tr
+        seq.addTRID('receive_gain');
+    else
+        seq.addTRID('acquire');
+    end
     % Alternative:
-    % seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', 1 + is_dummy_tr + 2*is_receive_gain_calibration_tr));
+    %seq.addBlock(mr.makeLabel('SET', 'TRID', 1 + is_dummy_tr + 2*is_receive_gain_calibration_tr));
+
+    % excitation block
+    seq.addBlock(rf, gz);
 
     % Slice-select refocus and readout prephasing block
     % Set phase-encode gradients to ~zero while iY < 1
     pesc = (iY>0) * pe_scales(max(iY,1));  % phase-encode gradient scaling
     pesc = pesc + (pesc == 0)*eps;        % non-zero scaling so that the trapezoid shape is preserved in the .seq file
-
     seq.addBlock(gx_pre, mr.scaleGrad(gy_pre, pesc), gz_reph);
 
     % Empty blocks with a label is ok -- for now they are ignored by the GE interpreter.
@@ -186,7 +191,7 @@ n_noise_scans = 5;
 for s = 1:n_noise_scans
     % Now we need to define a different sub-sequence,
     % so we need to label start of segment instance with a new unique TRID
-    seq.addBlock(mr.makeLabel('SET', 'TRID', 48));  % any unique positive int
+    seq.addTRID('noise_scan');  % any unique positive int
     seq.addBlock(mr.makeDelay(1)); 
     seq.addBlock(adc);
     seq.addBlock(mr.makeDelay(500e-6)); % make room for psd_grd_wait (gradient/ADC delay) and ADC ringdown
