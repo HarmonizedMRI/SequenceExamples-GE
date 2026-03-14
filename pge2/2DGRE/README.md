@@ -7,9 +7,27 @@ Use this demo with the most recent version of the
 **[pge2 interpreter](https://github.com/GEHC-External/pulseq-ge-interpreter)**.
 That site also contains scanner instructions, and Issues/Discussions forums where you can post bugs and questions.
 
-To download the required MATLAB packages, generate the pge sequence file, and reconstruct the data, see **setup.m** and **main.m** in this folder.
+To download the required MATLAB packages, generate the pge sequence file, and reconstruct the data, see 
+`setup.m`, `main.m`, and `recon_gre2d.m` in this folder.
 
-The output of **main.m** is shown below. The images on the left and right correspond to the first and second echoes, respectively.
+To reconstruct, do:
+```matlab
+>> setup;
+>> recon_gre2d('data.h5', 10);
+```
+
+The output of `recon_gre2d.m` is shown below. The images on the left and right correspond to the first and second echoes, respectively.
+
+To reconstruct on the scanner using the MATLAB runtime:
+1. Compile:
+    ```matlab
+    >> setup;
+    >> mcc -m recon_gre2d.m
+    ```
+2. On the scanner:
+    ```bash
+    $ ./run_recon_gre2d.sh /opt/mathworks_matlab_runtime_r2022a/root/v912 data.h5 10
+    ```
 
 <!--
 Tested on the following system(s):  
