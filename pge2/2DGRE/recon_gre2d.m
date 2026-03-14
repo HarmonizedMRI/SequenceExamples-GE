@@ -4,6 +4,11 @@ function recon_gre2d(sa_file, pislquant)
 
 % Recall that the two echoes are interleaved
 
+% if runninging from bash script, arguments are strings
+if ~isnumeric(pislquant)
+    pislquant = str2num(pislquant);
+end
+
 archive = GERecon('Archive.Load', sa_file);
 
 % skip past receive gain calibration TRs (pislquant)
