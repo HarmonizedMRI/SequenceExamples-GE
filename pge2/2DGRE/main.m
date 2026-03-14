@@ -5,7 +5,7 @@
 createSequenceFile = true;
 reconstruct = false;
 
-fn = 'gre2d';       % Pulseq file name (without the .seq extension)
+seq_name = 'gre2d';       % Pulseq file name (without the .seq extension)
 
 pislquant = 10;     % number of shots/ADC events used for receive gain calibration
 
@@ -19,7 +19,7 @@ if createSequenceFile
     %---------------------------------------------------------------
     % Convert .seq file to a PulSeg sequence (psq) object
     %---------------------------------------------------------------
-    psq = pulseg.fromSeq([fn '.seq']);   % ,'usesRotationEvents', false);
+    psq = pulseg.fromSeq([seq_name '.seq']);   % ,'usesRotationEvents', false);
 
     %---------------------------------------------------------------
     % Define hardware parameters for your scanner
@@ -41,6 +41,11 @@ if createSequenceFile
     PNSwt = [1 1 1];   % directional PNS weights, see pge2.pns()
     params = pge2.check(psq, sys_ge, 'PNSwt', PNSwt);
 
+    %------------------------------------------------------------------------
+    % Save psq object as .mat file for Matlab runtime based scanner workflow
+    %------------------------------------------------------------------------
+    save(seq_name, 'psq', 'params', 'pislquant');  % TODO: get sys_ge from scanner config files
+
     %---------------------------------------------------------------
     % Plot the psq sequence
     %---------------------------------------------------------------
@@ -54,7 +59,7 @@ if createSequenceFile
     % Validate psq representation against the original .seq file
     %---------------------------------------------------------------
     seq = mr.Sequence();
-    seq.read([fn '.seq']);
+    seq.read([seq_name '.seq']);
 
     % Cycle through all segment instances and stop on first mismatch
     pge2.validate(psq, sys_ge, seq, [], 'row', [], 'plot', false);
@@ -74,7 +79,7 @@ if createSequenceFile
     yloc = 0;
     zloc = 0;   % m
     psq = pge2.translateFOVrf(psq, [xloc yloc zloc]);
-    pge2.serialize(psq, [fn '.pge'], 'pislquant', 10, 'params', params, 'checkHash', false);
+    pge2.serialize(psq, [seq_name '.pge'], 'pislquant', 10, 'params', params, 'checkHash', false);
 
     %---------------------------------------------------------------
     % Validate the GE simulator XML output (created by WTools/Pulse View)
