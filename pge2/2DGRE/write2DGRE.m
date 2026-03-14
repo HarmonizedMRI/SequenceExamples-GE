@@ -209,8 +209,8 @@ end
 
 %% Output for execution and plot
 seq.setDefinition('FOV', [fov_x fov_y slice_thickness]);
-seq.setDefinition('Name', fn);
-seq.write([fn '.seq'])       % Write to pulseq file
+seq.setDefinition('Name', seq_name);
+seq.write([seq_name '.seq'])       % Write to pulseq file
 
 seq.plot('timeRange', [0 3]*tr);
 
