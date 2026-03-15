@@ -1,4 +1,4 @@
-function recon_gre2d(sa_file, pislquant)
+function [im1, im2] = recon_gre2d(sa_file, pislquant)
 
 % Load and display 2D GRE scan (both echoes)
 
