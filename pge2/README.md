@@ -1,7 +1,9 @@
 # Pulseq on GE v2 (pge2) examples 
 
 **Table of Contents**  
-[Overview and getting started](#overview-and-getting-started)  
+[Overview](#overview)  
+[Workflow](#workflow)  
+[Obtaining the software](#obtaining-the-software)  
 [Creating the .seq file](#creating-the-pulseq-file)  
 [Safety management](#safety-management)  
 
