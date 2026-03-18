@@ -100,7 +100,7 @@ if createSequenceFile
     forbidden_freq_range = 1./fliplr(forbidden_esp)/2;
     for ax = 1:size(forbidden_freq_range,1)
         FB(ax).bw = diff(forbidden_freq_range(ax,:));
-        FB(ax).freq = forbidden_freq_range(ax,1) + FB(1).bw/2;
+        FB(ax).freq = forbidden_freq_range(ax,1) + FB(ax).bw/2;
     end
     seq.gradSpectrum(FB);
 end
