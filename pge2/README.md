@@ -20,6 +20,11 @@ The workflow is based on a **vendor-neutral intermediate representation**, calle
 The pge2 interpreter directly translates the events specified in the PulSeg representation to the hardware, enabling flexible and efficient sequence execution.  
 Because of this low-level control, care must be taken to ensure that timing, rasterization, and hardware constraints are respected.
 
+**Note:** This workflow replaces the earlier PulCeq-based approach.
+Functionality has been split into:
+ - PulSeg (representation and conversion)
+ - pge2 (GE-specific tooling)
+
 ---
 
 ## Workflow
@@ -40,13 +45,38 @@ C --> D
 D --> E
 ```
 
-
-The following summarizes this workflow.
+The workflow is summarized below.
 See also [main.m](./2DGRE/main.m) in the [2D GRE demo](./2DGRE/) folder.
+
+
+### Minimal end-to-end example
+
+```matlab
+% Create .seq
+write2DGRE;
+
+seq_name = 'gre2d';
+
+% Convert to PulSeg
+psq = pulseg.fromSeq([seq_name '.seq']);
+
+% Define system
+sys_ge = pge2.opts(...);
+
+% Check
+params = pge2.check(psq, sys_ge);
+
+% Validate (strongly recommended before simulation or scanning)
+seq = mr.Sequence(sys); seq.read([seq_name '.seq']);
+pge2.validate(psq, sys_ge, seq, ...);
+
+% Serialize
+pge2.serialize(psq, [seq_name '.pge'], ...);
+```
 
 ### 1. Create the Pulseq file (`.seq`)
 
-Generate the `.seq` file as usual using Pulseq.
+Generate the `.seq` file using standard Pulseq tools.
 
 ```matlab
 write2DGRE;
@@ -159,8 +189,9 @@ The key points to keep in mind when creating a `.seq` file for the pge2 interpre
 
 ### Define segments (block groups) by adding TRID labels
 
-As in tv6, we define a 'segment' as a consecutive sub-sequence of Pulseq blocks that are always executed together,
+We define a 'segment' as a consecutive sub-sequence of Pulseq blocks that are always executed together,
 such as a TR or a magnetization preparation section.
+A segment corresponds roughly to a reusable unit such as a TR or preparation module.
 The GE interpreter needs this information to construct the sequence.
 
 To clarify this concept, we define the following:
@@ -172,7 +203,7 @@ A pulse sequence typically contains multiple instances of any given virtual segm
 
 ![Segment illustration](images/segments.png)
 
-In pratice, this means that you must **mark the beginning of each segment instance in the sequence using the `seq.addTRID()` function** in the Pulseq toolbox.
+In practice, this means that you must **mark the beginning of each segment instance in the sequence using the `seq.addTRID()` function** in the Pulseq toolbox.
 Example:
 ```matlab
 
