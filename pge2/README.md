@@ -7,7 +7,7 @@
 [Creating the .seq file](#creating-the-pulseq-file)  
 [Safety management](#safety-management)  
 
-** (Updated Mar 2026) **
+**(Updated Mar 2026)**
 
 
 ## Overview
@@ -25,6 +25,9 @@ Because of this low-level control, care must be taken to ensure that timing, ras
 ## Workflow
 
 To execute a Pulseq (`.seq`) file on a GE scanner using the pge2 interpreter, the sequence is first converted into a **PulSeg object**, validated, and then serialized to a `.pge` file.
+
+The following summarizes this workflow.
+See also [main.m](./2DGRE/main.m) in the [2D GRE demo](./2DGRE/) folder.
 
 ### 1. Create the Pulseq file (`.seq`)
 
