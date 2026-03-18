@@ -383,7 +383,7 @@ Forbidden EPI spacings are listed in
 
 on your scanner -- consult your GE representative to identify the specific file.
 
-You can then pass the forbidden frequencies to the the Pulseq function `seq.gradSpectrum` -- see
+You can then pass the forbidden frequencies to the Pulseq function `seq.gradSpectrum` -- see
 [2DGRE/main.m](2DGRE/main.m) for an example.
 
 
