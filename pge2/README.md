@@ -367,33 +367,57 @@ The `pge2.check()` and `pge2.validate()` functions help to catch many issues bef
 
 ## Safety management
 
-### PNS
+### Peripheral nerve stimulation (PNS)
 
-This is currently built in to the MATLAB function `pge2.check()`.  
-You can also perform the PNS directly using `pge2.pns()`.
+PNS checks are integrated into:
+
+```matlab
+pge2.check()
+```
+
+You can also evaluate PNS directly using:
+
+```
+pge2.pns()
+```
 
 
 ### Mechanical resonances (forbidden EPI spacings)
 
-Forbidden EPI spacings are listed in 
+GE scanners specify forbidden EPI echo spacings corresponding to mechanical resonances that must be avoided.
+
+These are listed on the scanner in:
 
 ```
-/srv/nfs/psd/etc/epiesp*.dat`
+/srv/nfs/psd/etc/epiesp*.dat
 ```
 
-on your scanner -- consult your GE representative to identify the specific file.
+Consult your GE representative to determine the appropriate file for your system.
 
-You can then pass the forbidden frequencies to the Pulseq function `seq.gradSpectrum` -- see
-[2DGRE/main.m](2DGRE/main.m) for an example.
+The forbidden frequencies can be incorporated into sequence design using the Pulseq function:
+
+```matlab
+seq.gradSpectrum(...)
+```
+
+See [2DGRE/main.m](2DGRE/main.m) for an example.
+
 
 
 ### Gradient and RF subsystem protection, and patient SAR
 
-This is handled for you by the interpreter, using a sliding-average estimation that parses through
-**the first 40,000 blocks** in the sequence (or until the end of the scan is reached, whichever comes first).
-It is your responsibility to ensure that the gradient/RF power in the remainder of the sequence
-does not exceed that in the first 40,000 blocks.
-This limit (40,000) is due to apparent memory limitations and has been determined empirically.
+Safety limits for gradient heating and RF power (including SAR) are enforced by the interpreter using a sliding-average estimation.
+
+Specifically:
+
+* The interpreter evaluates the ***first 40,000 blocks*** of the sequence (or the full sequence, if shorter)
+
+* Gradient and RF power in the remainder of the sequence must **not exceed** this level
+
+This limit arises from internal memory constraints and has been determined empirically.
+
+It is the user's responsibility to ensure compliance beyond the evaluated window.
+
 
 
 
