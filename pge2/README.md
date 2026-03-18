@@ -5,94 +5,134 @@
 [Creating the .seq file](#creating-the-pulseq-file)  
 [Safety management](#safety-management)  
 
-## News (updated Nov 2025)
-
-The pge2 interpreter EPIC source code will from now on be hosted by GE at
-https://github.com/GEHC-External/pulseq-ge-interpreter.
-For access, please contact your GE representative.
+(Updated Mar 2026)
 
 
-## Overview and getting started
+## Overview
 
-This repository contains examples of how to prepare and run 
-[Pulseq](https://pulseq.github.io/)
-sequences on GE scanners using the 'Pulseq on GE v2' (pge2) interpreter.
+This repository contains examples of how to prepare and run
+Pulseq sequences on GE scanners using the **Pulseq on GE v2 (pge2)** interpreter.
 
-The pge2 interpreter is quite powerful in the sense that it directly translates
-the various events specified in the Pulseq file to the hardware,
-which allows great flexibility in sequence design.
-This also means that care has to be taken when designing the Pulseq file, such as choosing
-gradient and RF raster times that are in fact supported by GE hardware.
-The information on this page is designed to guide you in creating robust Pulseq sequences for GE scanners.
+The workflow is based on a **vendor-neutral intermediate representation**, called **PulSeg**, which is derived from the Pulseq `.seq` file and organizes the sequence into reusable segments.
 
-It is recommended to first simulate the sequence in the GE simulator and plotter (Pulse View),
-which helps to identify most potential issues before going to the scanner.
-The simulator output (xml files) can also be compared directly with the original .seq file 
-using the `pge2.validate()` MATLAB function, to verify correct execution.
+The pge2 interpreter directly translates the events specified in the PulSeg representation to the hardware, enabling flexible and efficient sequence execution.  
+Because of this low-level control, care must be taken to ensure that timing, rasterization, and hardware constraints are respected.
 
+---
 
+## Workflow
 
-### Workflow 
+To execute a Pulseq (`.seq`) file on a GE scanner using the pge2 interpreter, the sequence is first converted into a **PulSeg object**, validated, and then serialized to a `.pge` file.
 
-To execute a .seq file on GE, it must first be converted to a `.pge` file.
-For the most up to date implementation of the following steps, 
-see the [2DGRE](./2DGRE/) example in this folder.
+### 1. Create the Pulseq file (`.seq`)
 
-1. Create the .seq file more or less as one usually does, but see the information below about adding TRID labels and other considerations.
-2. Convert the .seq file to a .pge file.  
-    1. Convert to a PulCeq sequence object (`ceq`):
-    ```
-    >> ceq = seq2ceq('gre2d.seq');
-    ```
-    2. Inspect and check the sequence with `pge2.plot()', `pge2.check()`, and `pge2.validate()`.
-    3. Write the .pge file:
-    ```
-    >> pge2.writeceq(ceq, 'gre2d.pge', 'sysGE', sysGE);
-    ```
-3. Execute the .pge file on the scanner using the pge2 interpreter.
+Generate the `.seq` file as usual using Pulseq.
 
-An alternative workflow is to prescribe the sequence interactively using [Pulserver](https://github.com/INFN-MRI/pulserver/).
-
-
-### Obtaining the software
-
-To use the pge2 Pulseq interpreter, you will need two separate pieces of software:
-the PulCeq MATLAB toolbox, 
-and the EPIC source code (or compiled binaries) for the interpreter itself.
-
-PulCeq is available here: https://github.com/HarmonizedMRI/PulCeq/releases  
-The pge2 interpreter is available here: https://github.com/GEHC-External/pulseq-ge-interpreter 
-
-Beginning with v2.5.2.0, the version numbers of PulCeq and pge will match.
-
-The version number scheme is:
-```
-v2.<major>.<minor>.<patch>
-
-<major>    Backward-incompatible changes, e.g., to the .pge file format
-<minor>    Backward-compatible feature additions, e.g., functions for sequence display/checks
-<patch>    minor changes and bug fixes 
+```matlab
+write2DGRE;
 ```
 
-For example, if using pge2 interpreter v2.5.2.0, the recommended PulCeq version is v.2.5.2.0 
-but any version v2.5.x.y should produce a .pge file that can be executed by the interpreter.
+---
 
-Version history:
+### 2. Convert to PulSeg representation
 
-| pge2 (tv7) | Compatible with:   | Comments |
-| ---------- | ------------------ | -------- |
-| [v2.5.2.1](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.2.1) | [PulCeq v2.5.2.x](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.5.2.0) | (latest) new checks; rotation event support|
-| [v2.5.0-beta3](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta3) | [PulCeq v2.4.1](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.1) | Added MP26 support. |
-| [v2.5.0-beta2](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta2) | [PulCeq v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) | DV26 support. Bug fixes. |
-| [v2.5.0-beta](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.5.0-beta) | [PulCeq v2.4.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.4.0-alpha) | Allow segments without gradients to pass heating check. |
-| [v2.4.0-alpha](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.4.0-alpha) | [PulCeq v2.3.0-alpha](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.3.0-alpha) | Remove limit on total number of Pulseq blocks. |
-| [v2.3.0](https://github.com/jfnielsen/TOPPEpsdSourceCode/releases/tag/v2.3.0) | [PulCeq v2.2.3-beta](https://github.com/HarmonizedMRI/PulCeq/releases/tag/v2.2.3-beta) | Supports 3D rotations |
+```matlab
+psq = pulseg.fromSeq([seq_name '.seq']);
+```
 
+---
+
+### 3. Define scanner hardware parameters
+
+```matlab
+sys_ge = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, coil);
+```
+
+---
+
+### 4. Check sequence constraints
+
+```matlab
+params = pge2.check(psq, sys_ge, 'PNSwt', PNSwt);
+```
+
+---
+
+### 5. Save PulSeg object (optional)
+
+```matlab
+save(seq_name, 'psq', 'params', 'pislquant');
+```
+
+---
+
+### 6. Visualize the sequence
+
+```matlab
+S = pge2.plot(psq, sys_ge);
+```
+
+---
+
+### 7. Validate against original Pulseq file
+
+```matlab
+seq = mr.Sequence();
+seq.read([seq_name '.seq']);
+
+pge2.validate(psq, sys_ge, seq, ...);
+```
+
+---
+
+### 8. Serialize to `.pge`
+
+```matlab
+pge2.serialize(psq, [seq_name '.pge'], ...);
+```
+
+
+## Obtaining the software
+
+To use the pge2 workflow, you will need:
+
+### 1. PulSeg tools (Pulseq → PulSeg conversion)
+
+Available at:
+https://github.com/HarmonizedMRI/PulSeg
+
+This repository provides:
+
+* `pulseg.fromSeq` (Pulseq → PulSeg conversion)
+* Definition of the PulSeg representation
+
+### 2. pge2 MATLAB toolbox
+
+Available at:
+https://github.com/HarmonizedMRI/pge2
+
+This toolbox provides:
+
+* Visualization: `pge2.plot`
+
+* Validation: `pge2.check`, `pge2.validate`
+
+* Serialization: `pge2.serialize`
+
+
+### 3. GE interpreter (EPIC)
+
+Available at:
+https://github.com/GEHC-External/pulseq-ge-interpreter
+
+(Contact GE for access)
+
+That site also contains instructions for simulating the `.pge` sequence and running it on the scanner.
 
 
 ## Creating the Pulseq file
 
-The key points to keep in mind when creating a .seq file for the pge2 interpreter are summarized here.
+The key points to keep in mind when creating a `.seq` file for the pge2 interpreter are summarized here.
 
 ### Define segments (block groups) by adding TRID labels
 
@@ -109,18 +149,20 @@ A pulse sequence typically contains multiple instances of any given virtual segm
 
 ![Segment illustration](images/segments.png)
 
-In pratice, this means that you must **mark the beginning of each segment in the sequence with the TRID label** in the Pulseq toolbox.
+In pratice, this means that you must **mark the beginning of each segment instance in the sequence using the seq.addTRID() function** in the Pulseq toolbox.
 Example:
 ```matlab
-inversionVirtualSegmentID = 4;  % any unique integer, in no particular order
-imagingVirtualSegmentID = 2;
 
-% Play an instance of the inversion virtual segment
-seq.addBlock(rf_inv, mr.makeDelay(1), mr.makeLabel('SET', 'TRID', inversionVirtualSegmentID));
+% Play an instance of the inversion virtual segment consisting of two blocks
+seq.addTRID('inversion');
+seq.addBlock(rf_inv);
+seq.addBlock(mr.makeDelay(1));
 
+% Imaging loop
 for i = 1:Ny
     % Play an instance of the imaging virtual segment
-    seq.addBlock(rf, gz, mr.makeLabel('SET', 'TRID', virtualSegmentID));
+    seq.addTRID('acquire');
+    seq.addBlock(rf, gz);
     ...
     seq.addblock(gxPre, mr.scaleGrad(gy, (i-Ny/2-1)/(Ny/2)));
     seq.addBlock(gx, adc);
@@ -128,13 +170,9 @@ for i = 1:Ny
     ...
 end
 ```
-See also the examples included in this repository.
-The TRID can be **any unique positive integer**, in no particular order. 
-The TRID labels the **virtual** segment, NOT the segment instance.
 
-When assigning TRID labels, **follow these rules**:
-1. Add a TRID label to the first block in a segment. 
-2. Gradient waveforms must ramp to zero at the beginning and end of a segment.
+When assigning TRID labels, **keep the following in mind**:
+1. Gradient waveforms must ramp to zero at the beginning and end of a segment.
 
 Dynamic sequence changes that **do not** require the creation of an additional (unique) TRID label:
 * gradient/RF amplitude scaling
@@ -148,20 +186,22 @@ Dynamic sequence changes that **do** require a separate segment (TRID) to be ass
 * duration of any of the blocks within a segment, unless it is a pure delay block
 
 Other things to note:
-* The interpreter inserts a 117us dead time (gap) at the end of each segment instance.
-Please account for this when creating your .seq file.
+* The interpreter inserts a 117 us dead time (gap) at the end of each segment instance.
+Please account for this when creating your `.seq` file.
 (Actually, this gap is adjustable on the scanner -- it is equal to 17us plus the ssi time.)
 * Each **virtual** segment takes up waveform memory in hardware, so it is generally good practice 
 to divide your sequence into as few virtual segments as possible, each being as short as possible.
+* Even empty blocks containing nothing but one or more labels are -- from a segment definition standpoint --
+  just as important as 'real' blocks of non-zero duration.
   
 
 ### Set system hardware parameters
 
 **Raster times:**  
-Unlike tv6, the waveforms in the .seq file are NOT interpolated to 4us, but are instead
+Unlike tv6, the waveforms in the `.seq` file are NOT interpolated to 4us, but are instead
 placed directly onto the hardware. 
 This is far more memory efficient and generally more accurate.
-Therefore, the following raster time requirements must be met in the .seq file:
+Therefore, the following raster time requirements must be met in the `.seq` file:
 * gradient raster time must be on a 4us boundary
 * RF raster time must be on a 2us boundary
 * ADC raster time must be an integer multiple of 2us
@@ -185,7 +225,7 @@ Time to turn ADC OFF = 0us
 The key thing to note is that the dead/ringdown intervals from one RF/ADC event must not overlap with those from another RF/ADC event.
 
 Also note that these times do NOT necessarily correspond to the values of `rfDeadTime`, `rfRingdownTime`, and `adcDeadTime`
-you should use when creating the .seq file.
+you should use when creating the `.seq` file.
 While the Pulseq MATLAB toolbox encourages the insertion of RF/ADC dead/ringdown times at the beginning
 and end of each block, this is generally not necessary on GE,
 and it is perfectly ok to override that behavior to make the sequence more time-efficient.
@@ -222,20 +262,20 @@ sys = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
               'B0', 3.0);
 ```
 If this results in overlapping RF/ADC dead/ringdown times, you would then adjust the timing as needed
-by modifying the event delays and block durations when creating the .seq file.
+by modifying the event delays and block durations when creating the `.seq` file.
 
 
 
 ### Additional recommendations
 
-* **Pre-define events outside of the main loop in your .seq file creation script.**
+* **Pre-define events outside of the main loop in your `.seq` file creation script.**
 GE sequences are built on the idea that there is a small set of pre-defined RF/gradient events,
 that repeat many times throughout the sequence except with (possibly) varying amplitudes,
 phase offsets, or (gradient) rotation;
 these pre-defined events give rise to the base blocks described above.
 It is therefore highly recommended to define events once, and then use `mr.scaleGrad()` to scale
 them as needed inside the main loop.
-This ensures proper detection of the base blocks during the seq2ceq.m conversion stage;
+This ensures proper detection of the base blocks during the `pulseg.fromSeq` conversion stage;
 if creating independent events inside the main loop using repeated calls to, e.g., `mr.makeTrapezoid()`, the
 resulting trapezoids generally do not have identical shapes and are therefore not instances of a shared base block.
 
@@ -251,19 +291,21 @@ In other words, the interpreter cannot rotate each block within a segment indepe
 If a segment contains multiple blocks with different rotation matrices, **only the last** of the non-identity rotations are applied. 
 If you find this to be the case, redesign the segment definitions to achieve the desired rotations.
 
-* Check your sequence using **pge2.validate()**, and plot the Ceq object using
+* Check your sequence using **pge2.validate()**, and plot the PulSeg object using
 **pge2.plot()**.
 This helps catch errors before simulating in WTools or scanning.
 
 
 ### Sequence timing: Summary and further comments
 
-* When loading a segment, the interpreter inserts a 117us dead time at the end of each segment.
+* When loading a segment, the interpreter inserts a 117 us dead time at the end of each segment.
+
 * The default values for `rfDeadTime`, `rfRingdownTime`, and `adcDeadTime` in the Pulseq MATLAB toolbox
 were set with Siemens scanners in mind, and as just discussed, setting them to 0 can in fact be a preferred option in many cases for GE users.
 This is because the default behavior in the Pulseq toolbox is to quietly insert corresponding gaps at the 
 start end end of each block, however this is not necessary on GE since the block boundaries 'disappear' within a segment.
-* In the internal sequence representation used by the interpreter, RF and ADC events are delayed by about 100us to account for gradient delays.
+
+* In the internal sequence representation used by the interpreter, RF and ADC events are delayed by about 100 us to account for gradient delays.
 Depending on the sequence details, you may need to extend the segment duration to account for this.
 
 The `pge2.check()` and `pge2.validate()` functions help to catch many issues before attempting to simulate or run on the scanner.
