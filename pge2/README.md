@@ -69,6 +69,9 @@ params = pge2.check(psq, sys_ge, 'PNSwt', PNSwt);
 save(seq_name, 'psq', 'params', 'pislquant');
 ```
 
+This `.mat` file can be used in the scanner-side FOV prescription workflow
+described [here](https://github.com/HarmonizedMRI/pge2/tree/main/scanner/fov_prescription).
+
 ---
 
 ### 6. Visualize the sequence
