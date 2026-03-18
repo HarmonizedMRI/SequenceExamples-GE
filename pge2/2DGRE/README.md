@@ -18,6 +18,7 @@ To reconstruct, do:
 
 The output of `recon_gre2d.m` is shown below. The images on the left and right correspond to the first and second echoes, respectively.
 
+<!--
 To reconstruct on the scanner using the MATLAB runtime:
 1. Compile:
     ```matlab
@@ -28,6 +29,7 @@ To reconstruct on the scanner using the MATLAB runtime:
     ```bash
     $ ./run_recon_gre2d.sh /opt/mathworks_matlab_runtime_r2022a/root/v912 data.h5 10
     ```
+-->
 
 <!--
 Tested on the following system(s):  
