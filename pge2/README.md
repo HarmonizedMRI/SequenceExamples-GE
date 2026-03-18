@@ -157,7 +157,7 @@ A pulse sequence typically contains multiple instances of any given virtual segm
 
 ![Segment illustration](images/segments.png)
 
-In pratice, this means that you must **mark the beginning of each segment instance in the sequence using the seq.addTRID() function** in the Pulseq toolbox.
+In pratice, this means that you must **mark the beginning of each segment instance in the sequence using the `seq.addTRID()` function** in the Pulseq toolbox.
 Example:
 ```matlab
 
