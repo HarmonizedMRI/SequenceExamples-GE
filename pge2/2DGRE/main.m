@@ -41,9 +41,10 @@ if createSequenceFile
     PNSwt = [1 1 1];   % directional PNS weights, see pge2.pns()
     params = pge2.check(psq, sys_ge, 'PNSwt', PNSwt);
 
-    %------------------------------------------------------------------------
-    % Save psq object as .mat file for Matlab runtime based scanner workflow
-    %------------------------------------------------------------------------
+    %------------------------------------------------------------------------------
+    % Save psq object as .mat file for Matlab runtime based scanner workflow.
+    % See https://github.com/HarmonizedMRI/pge2/tree/main/scanner/fov_prescription
+    %------------------------------------------------------------------------------
     save(seq_name, 'psq', 'params', 'pislquant');  % TODO: get sys_ge from scanner config files
 
     %---------------------------------------------------------------
@@ -88,7 +89,20 @@ if createSequenceFile
     %xml_path = '~/transfer/xml/';   % directory for Pulse View .xml files
     %pge2.validate(psq, sys_ge, seq, xml_path, 'row', [], 'plot', true);
 
-    % Coming soon: Check mechanical resonances (forbidden frequency bands)
+    % Check mechanical resonances (forbidden frequency bands).
+    % Forbidden EPI spacings are listed in /srv/nfs/psd/etc/epiesp*.dat
+    % on your scanner -- consult your GE representative to identify the specific file.
+    % Example epiesp.dat:  
+    %   forbidden EPI spacing (x) = [410 510] us
+    %   forbidden EPI spacing (y) = [410 510] us
+    %   forbidden EPI spacing (z) = [360 440] us
+    forbidden_esp = [410 510; 410 410; 360 440]*1e-6;  % sec
+    forbidden_freq_range = 1./fliplr(forbidden_esp)/2;
+    for ax = 1:size(forbidden_freq_range,1)
+        FB(ax).bw = diff(forbidden_freq_range(ax,:));
+        FB(ax).freq = forbidden_freq_range(ax,1) + FB(1).bw/2;
+    end
+    seq.gradSpectrum(FB);
 end
 
 if reconstruct
