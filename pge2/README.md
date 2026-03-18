@@ -5,7 +5,7 @@
 [Creating the .seq file](#creating-the-pulseq-file)  
 [Safety management](#safety-management)  
 
-(Updated Mar 2026)
+** (Updated Mar 2026) **
 
 
 ## Overview
@@ -127,7 +127,7 @@ https://github.com/GEHC-External/pulseq-ge-interpreter
 
 (Contact GE for access)
 
-That site also contains instructions for simulating the `.pge` sequence and running it on the scanner.
+That site also contains instructions for simulating the `.pge` sequence and executing it on the scanner.
 
 
 ## Creating the Pulseq file
