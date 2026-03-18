@@ -26,11 +26,11 @@ Because of this low-level control, care must be taken to ensure that timing, ras
 
 To execute a Pulseq (`.seq`) file on a GE scanner using the pge2 interpreter, the sequence is first converted into a **PulSeg object**, validated, and then serialized to a `.pge` file.
 
- ```mermaid
+```mermaid
 flowchart LR
 A[Create .seq file]
 B[Convert to PulSeg object]
-C[Plot/check/validate]
+C[Check, validate]
 D[.pge file]
 E[GE scanner]
 
