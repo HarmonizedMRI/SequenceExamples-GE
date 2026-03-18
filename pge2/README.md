@@ -410,7 +410,7 @@ Safety limits for gradient heating and RF power (including SAR) are enforced by 
 
 Specifically:
 
-* The interpreter evaluates the ***first 40,000 blocks*** of the sequence (or the full sequence, if shorter)
+* The interpreter evaluates the **first 40,000 blocks** of the sequence (or the full sequence, if shorter)
 
 * Gradient and RF power in the remainder of the sequence must **not exceed** this level
 
