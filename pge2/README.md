@@ -369,7 +369,23 @@ The `pge2.check()` and `pge2.validate()` functions help to catch many issues bef
 
 ### PNS
 
-This is currently built in to the MATLAB function `pge2.check()`.
+This is currently built in to the MATLAB function `pge2.check()`.  
+You can also perform the PNS directly using `pge2.pns()`.
+
+
+### Mechanical resonances (forbidden EPI spacings)
+
+Forbidden EPI spacings are listed in 
+
+```
+/srv/nfs/psd/etc/epiesp*.dat`
+```
+
+on your scanner -- consult your GE representative to identify the specific file.
+
+You can then pass the forbidden frequencies to the the Pulseq function `seq.gradSpectrum` -- see
+[2DGRE/main.m](2DGRE/main.m) for an example.
+
 
 ### Gradient and RF subsystem protection, and patient SAR
 
