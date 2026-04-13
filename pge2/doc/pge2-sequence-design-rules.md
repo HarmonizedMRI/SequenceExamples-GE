@@ -2,31 +2,56 @@
 
 The key points to keep in mind when creating a `.seq` file for the pge2 interpreter are summarized 
 in ../README.md.
-Here we provide both good and bad examples, to make this explicit.
+Here we define both **strict and soft rules**, to further clarify these concepts and promote best coding practices.
 
-We define both strict and soft rules.
-Strict rules must be followed, otherwise the sequence may either fail on download, 
+Strict rules MUST be followed, otherwise the sequence may either fail on download, 
 or may still play out but the result will not be as intended.
-Soft rules are intended to promot robust and memory-efficient sequence execution. 
+
+Soft rules are intended to promote robust and memory-efficient sequence execution. 
+
 
 ## Defining Segments
 
-A segment is defined based on its first occurrence in the .seq file.
-The segment definition is based on the TRID label -- no attempt is made to automatically detect segment boundaries.
-The TRID label is assigned using a special command, `seq.addTRID`.
+Segment boundaries are defined exclusively by TRID labels, that you assign as follows:
+
+```matlab
+seq.addTRID(<text_label>);
+```
+
+where `<text_label>` is any unique (and preferably descriptive) text string.
+
+We suggest using separate TRIDs for logically distinct sequence states, such as:
+- `dummy_shots`
+- `calibration_scans`
+- `imaging_shots`
+- `navigator_segments`
+
+A segment consists of all blocks following a given TRID label, up to (but not including) the next TRID label.
+
+The first time a TRID is encountered, pge2 stores that segment as the **abstract definition**.
+Later uses of the same TRID do not redefine the segment — they only replay the stored definition with updated waveform/RF/ADC parameters.
+
 
 ### Strict rule: The presence/absence of events must be the same for all segment instances
 
-Once a segment is defined, the interpreter assumes that all subsequent segment instances
-contain the identical sequence of blocks, and that each block contains the same set of non-empty RF, gradient, adc, and trigger events.
-The *type* of each gradient waveform (`grad`, `trap`) must also be consistent across segment instances.
+The event *structure* must remain identical across all instances:
+
+* same number of blocks,
+* same event types present in each block (RF / trap / arbitrary gradient / ADC / trigger),
+
+However, waveform amplitudes, phases, and frequencies may vary as long as the block/event structure is unchanged.
+
+Note: the duration of delay-only blocks may vary between segment instances, 
+as long as the delay block itself is present in the same block position in every instance.
+This is the recommended way to implement variable timing (e.g., TE / TR adjustments) without changing segment structure.
+
 
 #### Example
 
 The following will download on the scanner and may even run, but will not produce the intended result:
 
 ```matlab
-% Bad example
+% Bad example!
 n_dummy = 10;
 for iy = 1:n_dummy+n_y;
    seq.addTRID('acquire');
@@ -39,13 +64,19 @@ for iy = 1:n_dummy+n_y;
    seq.addBlock(gz_spoil);     % block D
 end
 ```
+
 The resulting segment definition is:
+
 ```
 ABD
 ```
-Here, the adc event (block C) will never be executed, since it's not present in the segment definition.
+
+Because the first segment instance defines block B as containing only gx, 
+later attempts to add the `adc` event in that block position are ignored by the interpreter. 
+As a result, no data will be acquired during those segment instances.
 
 The solution is to create two segments:
+
 ```matlab
 n_dummy = 10;
 for iy = 1:n_dummy+n_y;
@@ -62,28 +93,58 @@ for iy = 1:n_dummy+n_y;
    end
    seq.addBlock(gz_spoil);     % block D
 end
+
 ```
+
 The resulting segment definitions are:
+
 ```
-Segment 1: ABD
-Segment 2: ACD
+Abstract segment 1: ABD
+Abstract segment 2: ACD
 ```
-Now the interpreter will execute Segment 1 `n_dummy` times, and the Segment 2 `n_y` times.
+
+Now the interpreter will correctly execute Segment 1 `n_dummy` times, and Segment 2 `n_y` times.
+
+Note that in this example, we have for simplicity and clarity left out the y phase-encoding gradient that would be necessary to acquire an actual image.
+
+#### Example
+
+A common Pulseq pattern is inserting delays conditionally.
+However, conditional insertion/removal of delay-only blocks also changes segment structure and is not allowed within a segment.
 
 
-### Soft rule 1: minimize the number of blocks in a segment
+MATLAB
+```matlab
+if delay_vec(iy) > 0
+    seq.addBlock(mr.makeDelay(delay_vec(iy))); % NOT OK: conditional block presence
+end
+```
+
+Instead, do:
+```matlab
+for iy = 1:n_y
+    seq.addTRID('acquire');
+    seq.addBlock(rf, gz);
+    seq.addBlock(mr.makeDelay(delay_vec(iy))); % OK: same block, variable duration
+    seq.addBlock(gx, adc);
+end
+```
+
+### Soft rule: minimize the number of blocks in a segment
 
 Each abstract segment is placed in waveform sequence memory on scanner hardware, which has limited memory.
-It is therefore generally best to make the abstract segments consist of as few blocks as possible,
-while keeping the total number of segments small.
+It is therefore generally best to make the abstract segments consist of as few blocks as possible.
+
+However, while shorter segments are preferred, avoid creating an excessive number of unique segment types, 
+since each abstract segment also consumes sequencer resources.
 
 #### Example
 
 The following may run, but is inefficient since the 'acquire' segment contains a large number 
 of blocks:
 ```matlab
-% Bad example
-n_y = 32;
+% Bad example!
+n_y = 16;
 seq.addTRID('acquire');
 for iy = 1:n_y;
    seq.addBlock(rf, gz);       % block A
@@ -91,17 +152,17 @@ for iy = 1:n_y;
    seq.addBlock(gz_spoil);     % block C
 end
 ```
-The resulting segment contains the following block sequence:
+The resulting abstract segment contains the following block sequence:
 ```
-ABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABC
+Abstract segment 1: ABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABC
 ```
 The pge2 interpreter will attempt to load this entire sequence into waveform memory,
 and then execute it once.
+Depending on the available hardware memory, the sequence may or may not play out on the scanner.
 
 The better implementation is:
 ```matlab
-% Bad example
-n_y = 32;
+n_y = 16;
 for iy = 1:n_y;
    seq.addTRID('acquire');
    seq.addBlock(rf, gz);       % block A
@@ -109,92 +170,15 @@ for iy = 1:n_y;
    seq.addBlock(gz_spoil);     % block C
 end
 ```
-The resulting segment is simply:
+The resulting abstract segment is simply:
 ```
-ABC
+Abstract segment 1: ABC
 ```
-The pge2 interpreter will load this segment into sequencer memory and execute it 32 times.
-
-Note that in this example, we have for simplicity and clarity left out the y phase-encoding gradient that would be necessary to acquire an actual image.
+The pge2 interpreter will load this segment into sequencer memory and execute it `n_y` times.
 
 
-The pge2 interpreter directly translates the events specified in the PulSeg representation to the hardware, enabling flexible and efficient sequence execution.  
-
-Segment Identification: Deep dive on using seq.addTRID() effectively to avoid "virtual segment" bloat.
-
-Hardware Synchronization: Specific examples of aligning RF to 2us and Gradients to 4us boundaries (and why floor or round is your friend here).
-
-Dead Time Strategy: How to set rfDeadTime to 0 in mr.opts while manually managing the 72us/54us gaps for maximum efficiency.
-
-Waveform Reusability: The "Do's and Don'ts" of mr.scaleGrad vs. creating new trapezoids in a loop.
-
-Rotation Logic: A warning section that only the last rotation in a segment is applied.
-
-
-## Segment Identification
-
-Here we do a deep dive on using `seq.addTRID()` effectively to avoid "virtual segment" bloat.
-
-**Definition:**
-We define a 'segment' as a consecutive sub-sequence of Pulseq blocks that are always executed together,
-such as a TR or a magnetization preparation section.
-A segment corresponds roughly to a reusable unit such as a TR or preparation module.
-The GE interpreter needs this information to construct the sequence.
-
-To clarify this concept, we define the following:
-* **base block:** A Pulseq block with normalized waveform amplitudes. The base blocks are the fundamental building blocks, or 'atoms', of the sequence.
-* **virtual segment:** A sequence of base blocks in a particular order (with normalized amplitudes). 
-You can think of this as an abstract segment.
-* **segment instance:** a segment realization/occurrence within the pulse sequence, with specified waveform amplitudes and phase/frequency offsets.
-A pulse sequence typically contains multiple instances of any given virtual segment:
-
-![Segment illustration](images/segments.png)
-
-In practice, this means that you must **mark the beginning of each segment instance in the sequence using the `seq.addTRID()` function** in the Pulseq toolbox.
-Example:
-```matlab
-
-% Play an instance of the inversion virtual segment consisting of two blocks
-seq.addTRID('inversion');
-seq.addBlock(rf_inv);
-seq.addBlock(mr.makeDelay(1));
-
-% Imaging loop
-for i = 1:Ny
-    % Play an instance of the imaging virtual segment
-    seq.addTRID('acquire');
-    seq.addBlock(rf, gz);
-    ...
-    seq.addblock(gxPre, mr.scaleGrad(gy, (i-Ny/2-1)/(Ny/2)));
-    seq.addBlock(gx, adc);
-    seq.addblock(gxSpoil, mr.scaleGrad(gy, -(i-Ny/2-1)/(Ny/2)));
-    ...
-end
-```
-
-When assigning TRID labels, **keep the following in mind**:
-1. Gradient waveforms must ramp to zero at the beginning and end of a segment.
-
-Dynamic sequence changes that **do not** require the creation of an additional (unique) TRID label:
-* gradient/RF amplitude scaling
-* RF/receive phase 
-* duration of a pure delay block (block containing only a delay event)
-* gradient rotation
-
-Dynamic sequence changes that **do** require a separate segment (TRID) to be assigned:
-* waveform shape or duration
-* block execution order within a segment
-* duration of any of the blocks within a segment, unless it is a pure delay block
-
-Other things to note:
-* The interpreter inserts a 117 us dead time (gap) at the end of each segment instance.
-Please account for this when creating your `.seq` file.
-(Actually, this gap is adjustable on the scanner -- it is equal to 17us plus the ssi time.)
-* Each **virtual** segment takes up waveform memory in hardware, so it is generally good practice 
-to divide your sequence into as few virtual segments as possible, each being as short as possible.
-* Even empty blocks containing nothing but one or more labels are -- from a segment definition standpoint --
-  just as important as 'real' blocks of non-zero duration.
-  
+---
+---
 
 ## Hardware Synchronization 
 
@@ -317,6 +301,16 @@ Depending on the sequence details, you may need to extend the segment duration t
 The `pge2.check()` and `pge2.validate()` functions help to catch many issues before attempting to simulate or run on the scanner.
 
 
+
+Segment Identification: Deep dive on using seq.addTRID() effectively to avoid "virtual segment" bloat.
+
+Hardware Synchronization: Specific examples of aligning RF to 2us and Gradients to 4us boundaries (and why floor or round is your friend here).
+
+Dead Time Strategy: How to set rfDeadTime to 0 in mr.opts while manually managing the 72us/54us gaps for maximum efficiency.
+
+Waveform Reusability: The "Do's and Don'ts" of mr.scaleGrad vs. creating new trapezoids in a loop.
+
+Rotation Logic: A warning section that only the last rotation in a segment is applied.
 
 
 
