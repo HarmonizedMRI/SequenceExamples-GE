@@ -112,15 +112,14 @@ Note that in this example, we have for simplicity and clarity left out the y pha
 A common Pulseq pattern is inserting delays conditionally.
 However, conditional insertion/removal of delay-only blocks also changes segment structure and is not allowed within a segment.
 
-
-MATLAB
 ```matlab
 if delay_vec(iy) > 0
     seq.addBlock(mr.makeDelay(delay_vec(iy))); % NOT OK: conditional block presence
 end
 ```
 
-Instead, do:
+If timing must vary, use a delay block in all instances and vary only its duration:
+
 ```matlab
 for iy = 1:n_y
     seq.addTRID('acquire');
