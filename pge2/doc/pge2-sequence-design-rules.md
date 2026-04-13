@@ -44,6 +44,62 @@ Note: the duration of delay-only blocks may vary between segment instances,
 as long as the delay block itself is present in the same block position in every instance.
 This is the recommended way to implement variable timing (e.g., TE / TR adjustments) without changing segment structure.
 
+#### Practical recommendation: define reusable base events outside the main loop
+
+In practice, satisfying the segment consistency rule usually requires defining reusable RF and gradient events once, outside the main loop that creates repeated segment instances.
+
+GE sequences are designed around a relatively small set of pre-defined waveform objects that are replayed many times, with only parameters such as:
+
+- gradient amplitude,
+- RF phase / frequency offset,
+- gradient rotation
+
+changing between repetitions.
+
+The pge2 conversion pipeline follows the same philosophy: during `pulseg.fromSeq`, it identifies repeated waveform patterns and converts them into shared base blocks.
+
+If new events are created independently inside the main loop using repeated calls to functions such as `mr.makeTrapezoid()`, small differences in:
+
+- raster rounding,
+- rise / fall timing,
+- flat-top duration
+
+may cause those events to be treated as distinct waveforms, even if they were intended to be identical.
+
+This can:
+
+- prevent proper block reuse,
+- increase waveform memory usage,
+- cause segment detection / playback issues.
+
+Therefore, it is strongly recommended to:
+
+- define base RF / gradient events once outside the loop,
+- reuse them directly when possible,
+- use `mr.scaleGrad()` (and related utilities) to vary amplitudes as needed.
+
+Recommended pattern:
+```matlab
+gx_base = mr.makeTrapezoid('x', ...);
+
+for iy = 1:n_y
+    seq.addTRID('acquire');
+    gx = mr.scaleGrad(gx_base, pe_scale(iy));
+    seq.addBlock(rf, gz);
+    seq.addBlock(gx, adc);
+end
+```
+
+Discouraged pattern
+```matlab
+for iy = 1:n_y
+    gx = mr.makeTrapezoid('x', 'Area', area_vec(iy), ...); % risky
+    seq.addTRID('acquire');
+    seq.addBlock(rf, gz);
+    seq.addBlock(gx, adc);
+end
+```
+
 
 #### Example
 
@@ -212,32 +268,28 @@ but is consistent with the notion of a 'sequence TR'.
 
 
 
-## Low-level timing and hardware synchronization 
+## Setting system (scanner) parameters
 
+### Raster times
 
-### Raster times:**  
-Unlike tv6, the waveforms in the `.seq` file are NOT interpolated to 4us, but are instead
-placed directly onto the hardware. 
-This is far more memory efficient and generally more accurate.
-Therefore, the following raster time requirements must be met in the `.seq` file:
-* gradient raster time must be on a 4us boundary
-* RF raster time must be on a 2us boundary
-* ADC raster time must be on a 2us boundary (except on MAGNUS which supports 1us)
-* block duration must be a on a 4us boundary
+The waveforms in the `.seq` file are placed directly onto the hardware,
+and must therefore adhere to the scanner raster time requirements.
 
-**Event delays:**  
-* gradient event delays must be an integer multiple of 4us
-* RF event delays must be an integer multiple of 2us
-* ADC event delays must be an integer multiple of 1us
+- `sys.gradRasterTime` must be an integer multiple of 4us
+- `sys.rfRasterTime` must be an integer multiple of 2us
+- `sys.adcRasterTime` must be an integer multiple of 2us, except MAGNUS which supports 1us.
+- `sys.blockDurationRaster` must be an integer multiple of 4us
 
-**Minimum gaps before and after RF/ADC events:**   
+### RF/ADC dead- and ringdown-times
+
 Like on other vendors, there is some time required to turn on/off the RF amplifier and ADC card.
 To our knowledge, on GE these are:
+
 ```
-Time to turn RF amplifier ON = 72us             # RF dead time
-Time to turn RF amplifier OFF = 54us            # RF ringdown time
-Time to turn ADC ON = 40us                      # ADC dead time
-Time to turn ADC OFF = 0us
+Time to turn RF amplifier ON = 72us         # RF dead time
+Time to turn RF amplifier OFF = 54us        # RF ringdown time
+Time to turn ADC ON = 40us                  # ADC dead time
+Time to turn ADC OFF = 0us                  # ADC ringdown time
 ```
 
 The key thing to note is that the dead/ringdown intervals from one RF/ADC event must not overlap with those from another RF/ADC event.
@@ -245,10 +297,13 @@ The key thing to note is that the dead/ringdown intervals from one RF/ADC event 
 Also note that these times do NOT necessarily correspond to the values of `rfDeadTime`, `rfRingdownTime`, and `adcDeadTime`
 you should use when creating the `.seq` file.
 While the Pulseq MATLAB toolbox encourages the insertion of RF/ADC dead/ringdown times at the beginning
-and end of each block, this is generally not necessary on GE,
-and it is perfectly ok to override that behavior to make the sequence more time-efficient.
+and end of each block, this is often not necessary on GE since the block boundaries 'disappear' inside a segment.
+It is therefore perfectly ok to override that behavior to make the sequence more time-efficient.
 
-**Examples:**
+### Examples
+
+Conservative choice, that causes the `+mr` toolbox to insert non-zero delays as needed:
+
 ```matlab
 sys = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
               'maxSlew', 180, 'slewUnit', 'T/m/s', ...
@@ -261,11 +316,8 @@ sys = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
               'blockDurationRaster', 4e-6, ...
               'B0', 3.0);
 ```
-Note, however, that it may be possible to set some or all of the various dead- and ringdown times to 0
-as long as there is a gap in the previous/subsequent block to allow time 
-to turn on/off RF and ADC events.
-This is because the block boundaries 'disappear' inside a segment.
-If you know this to be the case, you may want to try the following, more time-efficient, alternative:
+
+A more time-efficient choice:
 
 ```matlab
 sys = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
@@ -279,69 +331,47 @@ sys = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
               'blockDurationRaster', 4e-6, ...
               'B0', 3.0);
 ```
-If this results in overlapping RF/ADC dead/ringdown times, you would then adjust the timing as needed
-by modifying the event delays and block durations when creating the `.seq` file.
+
+If the latter results in overlapping RF/ADC dead/ringdown times, you need adjust the timing accordingly
+(by, e.g., setting the dead/ringdown times to non-zero values, or setting delays and block durations explicitly, etc).
 
 
-## Dead- and ringdown-time strategy 
 
-### Additional recommendations
+## Sequence timing 
 
-* **Pre-define events outside of the main loop in your `.seq` file creation script.**
-GE sequences are built on the idea that there is a small set of pre-defined RF/gradient events,
-that repeat many times throughout the sequence except with (possibly) varying amplitudes,
-phase offsets, or (gradient) rotation;
-these pre-defined events give rise to the base blocks described above.
-It is therefore highly recommended to define events once, and then use `mr.scaleGrad()` to scale
-them as needed inside the main loop.
-This ensures proper detection of the base blocks during the `pulseg.fromSeq` conversion stage;
-if creating independent events inside the main loop using repeated calls to, e.g., `mr.makeTrapezoid()`, the
-resulting trapezoids generally do not have identical shapes and are therefore not instances of a shared base block.
+### Event delays
 
-* **Avoid setting waveform amplitudes to exactly zero -- instead, set to `eps` or a similarly small number.**
-This is recommended because the Pulseq toolbox may not recognize, e.g., a zero-amplitude trapezoid
-as exactly that, which is in conflict with the GE sequence model.
+- gradient event delays must be an integer multiple of 4us
+- RF event delays must be an integer multiple of 2us
+- ADC event delays must be an integer multiple of 1us
 
-* **Use rotation events,** rather than rotating gradients manually or using the older
+### Segment 'ringdown' time
+
+When loading a segment, the interpreter inserts a 117 us dead time at the end of each segment.
+
+### RF and ADC delays
+
+In the internal sequence representation used by the interpreter, RF and ADC events are delayed by about 100 us to account for gradient delays.
+Depending on the sequence details, you may need to extend the segment duration to account for this.
+
+
+## Gradient rotation
+
+**Use rotation events** rather than rotating gradients manually or using the older
 `mr.rotate` or `mr.rotate3D` functions (in the core Pulseq toolbox).
 Rotation events are a new feature in Pulseq, see https://github.com/pulseq/pulseq/discussions/117.
+
 **NB! The rotation is applied to the entire segment as a whole.**
 In other words, the interpreter cannot rotate each block within a segment independently.
 If a segment contains multiple blocks with different rotation matrices, **only the last** of the non-identity rotations are applied. 
 If you find this to be the case, redesign the segment definitions to achieve the desired rotations.
 
-* Check your sequence using **pge2.validate()**, and plot the PulSeg object using
-**pge2.plot()**.
-This helps catch errors before simulating in WTools or scanning.
+## Additional recommendations
 
+- **Avoid setting waveform amplitudes to exactly zero -- instead, set to `eps` or a similarly small number.**
+This is recommended because the Pulseq toolbox may not recognize, e.g., a zero-amplitude trapezoid
+as exactly that, which is in conflict with the GE sequence model.
 
-## Sequence timing 
-
-How to set rfDeadTime to 0 in mr.opts while manually managing the 72us/54us gaps for maximum efficiency.
-
-* When loading a segment, the interpreter inserts a 117 us dead time at the end of each segment.
-
-* The default values for `rfDeadTime`, `rfRingdownTime`, and `adcDeadTime` in the Pulseq MATLAB toolbox
-were set with Siemens scanners in mind, and as just discussed, setting them to 0 can in fact be a preferred option in many cases for GE users.
-This is because the default behavior in the Pulseq toolbox is to quietly insert corresponding gaps at the 
-start end end of each block, however this is not necessary on GE since the block boundaries 'disappear' within a segment.
-
-* In the internal sequence representation used by the interpreter, RF and ADC events are delayed by about 100 us to account for gradient delays.
-Depending on the sequence details, you may need to extend the segment duration to account for this.
-
-The `pge2.check()` and `pge2.validate()` functions help to catch many issues before attempting to simulate or run on the scanner.
-
-
-
-Segment Identification: Deep dive on using seq.addTRID() effectively to avoid "virtual segment" bloat.
-
-Hardware Synchronization: Specific examples of aligning RF to 2us and Gradients to 4us boundaries (and why floor or round is your friend here).
-
-Dead Time Strategy: How to set rfDeadTime to 0 in mr.opts while manually managing the 72us/54us gaps for maximum efficiency.
-
-Waveform Reusability: The "Do's and Don'ts" of mr.scaleGrad vs. creating new trapezoids in a loop.
-
-Rotation Logic: A warning section that only the last rotation in a segment is applied.
 
 
 
