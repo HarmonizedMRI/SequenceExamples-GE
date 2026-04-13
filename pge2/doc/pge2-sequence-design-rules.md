@@ -18,8 +18,7 @@ Segment boundaries are defined exclusively by TRID labels, that you assign as fo
 seq.addTRID(<text_label>);
 ```
 
-where `<text_label>` is any unique (and preferably descriptive) text string.
-
+where `<text_label>` is any unique text string.
 We suggest using separate TRIDs for logically distinct sequence states, such as:
 - `dummy_shots`
 - `calibration_scans`
