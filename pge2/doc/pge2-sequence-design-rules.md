@@ -1,194 +1,141 @@
-# Pulseq on GE v2 (pge2) examples 
+# Rules for creating pge2-compatible .seq files
 
-**Table of Contents**  
-[Overview](#overview)  
-[Workflow](#workflow)  
-[Obtaining the software](#obtaining-the-software)  
-[Creating the .seq file](#creating-the-pulseq-file)  
-[Safety management](#safety-management)  
+The key points to keep in mind when creating a `.seq` file for the pge2 interpreter are summarized 
+in ../README.md.
+Here we provide both good and bad examples, to make this explicit.
 
-**(Updated Mar 2026)**
+We define both strict and soft rules.
+Strict rules must be followed, otherwise the sequence may either fail on download, 
+or may still play out but the result will not be as intended.
+Soft rules are intended to promot robust and memory-efficient sequence execution. 
+
+## Defining Segments
+
+A segment is defined based on its first occurrence in the .seq file.
+The segment definition is based on the TRID label -- no attempt is made to automatically detect segment boundaries.
+The TRID label is assigned using a special command, `seq.addTRID`.
+
+### Strict rule: The presence/absence of events must be the same for all segment instances
+
+Once a segment is defined, the interpreter assumes that all subsequent segment instances
+contain the identical sequence of blocks, and that each block contains the same set of non-empty RF, gradient, adc, and trigger events.
+The *type* of each gradient waveform (`grad`, `trap`) must also be consistent across segment instances.
+
+#### Example
+
+The following will download on the scanner and may even run, but will not produce the intended result:
+
+```matlab
+% Bad example
+n_dummy = 10;
+for iy = 1:n_dummy+n_y;
+   seq.addTRID('acquire');
+   seq.addBlock(rf, gz);       % block A
+   if iy <= n_dummy
+       seq.addBlock(gx);       % block B
+   else
+       seq.addBlock(gx, adc);  % block C
+   end
+   seq.addBlock(gz_spoil);     % block D
+end
+```
+The resulting segment definition is:
+```
+ABD
+```
+Here, the adc event (block C) will never be executed, since it's not present in the segment definition.
+
+The solution is to create two segments:
+```matlab
+n_dummy = 10;
+for iy = 1:n_dummy+n_y;
+   if iy <= n_dummy
+       seq.addTRID('dummy_shot');
+   else
+       seq.addTRID('acquire');
+   end
+   seq.addBlock(rf, gz);       % block A
+   if iy <= n_dummy
+       seq.addBlock(gx);       % block B
+   else
+       seq.addBlock(gx, adc);  % block C
+   end
+   seq.addBlock(gz_spoil);     % block D
+end
+```
+The resulting segment definitions are:
+```
+Segment 1: ABD
+Segment 2: ACD
+```
+Now the interpreter will execute Segment 1 `n_dummy` times, and the Segment 2 `n_y` times.
 
 
-## Overview
+### Soft rule 1: minimize the number of blocks in a segment
 
-This repository contains examples of how to prepare and run
-Pulseq sequences on GE scanners using the **Pulseq on GE v2 (pge2)** interpreter.
+Each abstract segment is placed in waveform sequence memory on scanner hardware, which has limited memory.
+It is therefore generally best to make the abstract segments consist of as few blocks as possible,
+while keeping the total number of segments small.
 
-The workflow is based on a **vendor-neutral intermediate representation**, called **PulSeg**, which is derived from the Pulseq `.seq` file and organizes the sequence into reusable segments.
+#### Example
+
+The following may run, but is inefficient since the 'acquire' segment contains a large number 
+of blocks:
+```matlab
+% Bad example
+n_y = 32;
+seq.addTRID('acquire');
+for iy = 1:n_y;
+   seq.addBlock(rf, gz);       % block A
+   seq.addBlock(gx, adc);      % block B
+   seq.addBlock(gz_spoil);     % block C
+end
+```
+The resulting segment contains the following block sequence:
+```
+ABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABC
+```
+The pge2 interpreter will attempt to load this entire sequence into waveform memory,
+and then execute it once.
+
+The better implementation is:
+```matlab
+% Bad example
+n_y = 32;
+for iy = 1:n_y;
+   seq.addTRID('acquire');
+   seq.addBlock(rf, gz);       % block A
+   seq.addBlock(gx, adc);      % block B
+   seq.addBlock(gz_spoil);     % block C
+end
+```
+The resulting segment is simply:
+```
+ABC
+```
+The pge2 interpreter will load this segment into sequencer memory and execute it 32 times.
+
+Note that in this example, we have for simplicity and clarity left out the y phase-encoding gradient that would be necessary to acquire an actual image.
+
 
 The pge2 interpreter directly translates the events specified in the PulSeg representation to the hardware, enabling flexible and efficient sequence execution.  
-Because of this low-level control, care must be taken to ensure that timing, rasterization, and hardware constraints are respected.
 
-**Note:** This workflow replaces the earlier PulCeq-based approach.
-Functionality has been split into:
- - PulSeg (representation and conversion)
- - pge2 (GE-specific tooling)
+Segment Identification: Deep dive on using seq.addTRID() effectively to avoid "virtual segment" bloat.
 
----
+Hardware Synchronization: Specific examples of aligning RF to 2us and Gradients to 4us boundaries (and why floor or round is your friend here).
 
-## Workflow
+Dead Time Strategy: How to set rfDeadTime to 0 in mr.opts while manually managing the 72us/54us gaps for maximum efficiency.
 
-To execute a Pulseq (`.seq`) file on a GE scanner using the pge2 interpreter, the sequence is first converted into a **PulSeg object**, validated, and then serialized to a `.pge` file.
+Waveform Reusability: The "Do's and Don'ts" of mr.scaleGrad vs. creating new trapezoids in a loop.
 
-```mermaid
-flowchart LR
-A[Create .seq file]
-B[Convert to PulSeg object]
-C[Check, validate]
-D[.pge file]
-E[GE scanner]
+Rotation Logic: A warning section that only the last rotation in a segment is applied.
 
-A --> B
-B --> C
-C --> D
-D --> E
-```
 
-The workflow is summarized below.
-See also [main.m](./2DGRE/main.m) in the [2D GRE demo](./2DGRE/) folder.
+## Segment Identification
 
+Here we do a deep dive on using `seq.addTRID()` effectively to avoid "virtual segment" bloat.
 
-### Minimal end-to-end example
-
-```matlab
-% Create .seq
-write2DGRE;
-
-seq_name = 'gre2d';
-
-% Convert to PulSeg
-psq = pulseg.fromSeq([seq_name '.seq']);
-
-% Define system
-sys_ge = pge2.opts(...);
-
-% Check
-params = pge2.check(psq, sys_ge);
-
-% Validate (strongly recommended before simulation or scanning)
-seq = mr.Sequence(sys); seq.read([seq_name '.seq']);
-pge2.validate(psq, sys_ge, seq, ...);
-
-% Serialize
-pge2.serialize(psq, [seq_name '.pge'], ...);
-```
-
-### 1. Create the Pulseq file (`.seq`)
-
-Generate the `.seq` file using standard Pulseq tools.
-
-```matlab
-write2DGRE;
-```
-
----
-
-### 2. Convert to PulSeg representation
-
-```matlab
-psq = pulseg.fromSeq([seq_name '.seq']);
-```
-
----
-
-### 3. Define scanner hardware parameters
-
-```matlab
-sys_ge = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, coil);
-```
-
----
-
-### 4. Check sequence constraints
-
-```matlab
-params = pge2.check(psq, sys_ge, 'PNSwt', PNSwt);
-```
-
----
-
-### 5. Save PulSeg object (optional)
-
-```matlab
-save(seq_name, 'psq', 'params', 'pislquant');
-```
-
-This `.mat` file can be used in the scanner-side FOV prescription workflow
-described [here](https://github.com/HarmonizedMRI/pge2/tree/main/scanner/fov_prescription).
-
----
-
-### 6. Visualize the sequence
-
-```matlab
-S = pge2.plot(psq, sys_ge);
-```
-
----
-
-### 7. Validate against original Pulseq file
-
-```matlab
-seq = mr.Sequence();
-seq.read([seq_name '.seq']);
-
-pge2.validate(psq, sys_ge, seq, ...);
-```
-
----
-
-### 8. Serialize to `.pge`
-
-```matlab
-pge2.serialize(psq, [seq_name '.pge'], ...);
-```
-
-
-## Obtaining the software
-
-To use the pge2 workflow, you will need:
-
-### 1. PulSeg tools (Pulseq → PulSeg conversion)
-
-Available at:
-https://github.com/HarmonizedMRI/PulSeg
-
-This repository provides:
-
-* `pulseg.fromSeq` (Pulseq → PulSeg conversion)
-* Definition of the PulSeg representation
-
-### 2. pge2 MATLAB toolbox
-
-Available at:
-https://github.com/HarmonizedMRI/pge2
-
-This toolbox provides:
-
-* Visualization: `pge2.plot`
-
-* Validation: `pge2.check`, `pge2.validate`
-
-* Serialization: `pge2.serialize`
-
-
-### 3. GE interpreter (EPIC)
-
-Available at:
-https://github.com/GEHC-External/pulseq-ge-interpreter
-
-(Contact GE for access)
-
-That site also contains instructions for simulating the `.pge` sequence and executing it on the scanner.
-
-
-## Creating the Pulseq file
-
-The key points to keep in mind when creating a `.seq` file for the pge2 interpreter are summarized here.
-
-### Define segments (block groups) by adding TRID labels
-
+**Definition:**
 We define a 'segment' as a consecutive sub-sequence of Pulseq blocks that are always executed together,
 such as a TR or a magnetization preparation section.
 A segment corresponds roughly to a reusable unit such as a TR or preparation module.
@@ -249,7 +196,9 @@ to divide your sequence into as few virtual segments as possible, each being as 
   just as important as 'real' blocks of non-zero duration.
   
 
-### Set system hardware parameters
+## Hardware Synchronization 
+
+Specific examples of aligning RF to 2us and Gradients to 4us boundaries.
 
 **Raster times:**  
 Unlike tv6, the waveforms in the `.seq` file are NOT interpolated to 4us, but are instead
@@ -319,6 +268,7 @@ If this results in overlapping RF/ADC dead/ringdown times, you would then adjust
 by modifying the event delays and block durations when creating the `.seq` file.
 
 
+## Dead- and ringdown-time strategy 
 
 ### Additional recommendations
 
@@ -350,7 +300,9 @@ If you find this to be the case, redesign the segment definitions to achieve the
 This helps catch errors before simulating in WTools or scanning.
 
 
-### Sequence timing: Summary and further comments
+## Sequence timing 
+
+How to set rfDeadTime to 0 in mr.opts while manually managing the 72us/54us gaps for maximum efficiency.
 
 * When loading a segment, the interpreter inserts a 117 us dead time at the end of each segment.
 
@@ -364,59 +316,6 @@ Depending on the sequence details, you may need to extend the segment duration t
 
 The `pge2.check()` and `pge2.validate()` functions help to catch many issues before attempting to simulate or run on the scanner.
 
-
-## Safety management
-
-### Peripheral nerve stimulation (PNS)
-
-PNS checks are integrated into:
-
-```matlab
-pge2.check()
-```
-
-You can also evaluate PNS directly using:
-
-```
-pge2.pns()
-```
-
-
-### Mechanical resonances (forbidden EPI spacings)
-
-GE scanners specify forbidden EPI echo spacings corresponding to mechanical resonances that must be avoided.
-
-These are listed on the scanner in:
-
-```
-/srv/nfs/psd/etc/epiesp*.dat
-```
-
-Consult your GE representative to determine the appropriate file for your system.
-
-The forbidden frequencies can be incorporated into sequence design using the Pulseq function:
-
-```matlab
-seq.gradSpectrum(...)
-```
-
-See [2DGRE/main.m](2DGRE/main.m) for an example.
-
-
-
-### Gradient and RF subsystem protection, and patient SAR
-
-Safety limits for gradient heating and RF power (including SAR) are enforced by the interpreter using a sliding-average estimation.
-
-Specifically:
-
-* The interpreter evaluates the **first 40,000 blocks** of the sequence (or the full sequence, if shorter)
-
-* Gradient and RF power in the remainder of the sequence must **not exceed** this level
-
-This limit arises from internal memory constraints and has been determined empirically.
-
-It is the user's responsibility to ensure compliance beyond the evaluated window.
 
 
 
