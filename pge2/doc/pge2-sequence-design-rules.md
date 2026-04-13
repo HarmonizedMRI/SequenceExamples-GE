@@ -2,7 +2,7 @@
 
 The key points to keep in mind when creating a `.seq` file for the pge2 interpreter are summarized 
 in ../README.md.
-Here we define both **strict and soft rules**, to further clarify these concepts and promote best coding practices.
+Here we define both **strict and soft rules**, to further clarify these concepts and promote best practices.
 
 Strict rules MUST be followed, otherwise the sequence may either fail on download, 
 or may still play out but the result will not be as intended.
@@ -19,7 +19,7 @@ seq.addTRID(<text_label>);
 ```
 
 where `<text_label>` is any unique text string.
-We suggest using separate TRIDs for logically distinct sequence states, such as:
+We suggest using separate TRIDs for logically distinct sub-sequences, such as:
 - `dummy_shots`
 - `calibration_scans`
 - `imaging_shots`
@@ -135,6 +135,8 @@ It is therefore generally best to make the abstract segments consist of as few b
 
 However, while shorter segments are preferred, avoid creating an excessive number of unique segment types, 
 since each abstract segment also consumes sequencer resources.
+Segmenting the sequence into an excessively large number of unique abstract segments 
+also risks making the code 
 
 #### Example
 
@@ -154,13 +156,42 @@ The resulting abstract segment contains the following block sequence:
 ```
 Abstract segment 1: ABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABC
 ```
-The pge2 interpreter will attempt to load this entire sequence into waveform memory,
-and then execute it once.
+The pge2 interpreter will attempt to load this large segment into waveform memory,
+and then execute it only once.
 Depending on the available hardware memory, the sequence may or may not play out on the scanner.
 
-The better implementation is:
+The following may also be technically possible:
+
 ```matlab
-n_y = 16;
+for iy = 1:n_y;
+   seq.addTRID('excite');
+   seq.addBlock(rf, gz);       % block A
+
+   seq.addTRID('acquire');
+   seq.addBlock(gx, adc);      % block B
+
+   seq.addTRID('spoil');
+   seq.addBlock(gz_spoil);     % block C
+end
+```
+
+which produces 
+
+```
+Abstract segment 1: A
+Abstract segment 2: B
+Abstract segment 3: C
+```
+
+However, this has several drawbacks:
+ - Gradient waveforms must start on 0 and ramp down to 0 before the end of each segment. 
+   This restricts the kind of waveforms that this approach can support. 
+ - Breaks the link between segments and logically distinct sub-sequences
+ - Causes code bloat and makes the code harder to read
+
+The **recommended implementation** for this example is:
+
+```matlab
 for iy = 1:n_y;
    seq.addTRID('acquire');
    seq.addBlock(rf, gz);       % block A
@@ -168,28 +199,30 @@ for iy = 1:n_y;
    seq.addBlock(gz_spoil);     % block C
 end
 ```
+
 The resulting abstract segment is simply:
+
 ```
 Abstract segment 1: ABC
 ```
+
 The pge2 interpreter will load this segment into sequencer memory and execute it `n_y` times.
+This has about the same hardware memory requirements as the previous approach, 
+but is consistent with the notion of a 'sequence TR'.
 
 
----
----
 
-## Hardware Synchronization 
+## Low-level timing and hardware synchronization 
 
-Specific examples of aligning RF to 2us and Gradients to 4us boundaries.
 
-**Raster times:**  
+### Raster times:**  
 Unlike tv6, the waveforms in the `.seq` file are NOT interpolated to 4us, but are instead
 placed directly onto the hardware. 
 This is far more memory efficient and generally more accurate.
 Therefore, the following raster time requirements must be met in the `.seq` file:
 * gradient raster time must be on a 4us boundary
 * RF raster time must be on a 2us boundary
-* ADC raster time must be an integer multiple of 2us
+* ADC raster time must be on a 2us boundary (except on MAGNUS which supports 1us)
 * block duration must be a on a 4us boundary
 
 **Event delays:**  
