@@ -9,6 +9,24 @@ or may still play out but the result will not be as intended.
 
 Soft rules are intended to promote robust and memory-efficient sequence execution. 
 
+## The segment concept
+
+We define a 'segment' as a consecutive sub-sequence of Pulseq blocks that are always executed together,
+such as a TR or a magnetization preparation section.
+A segment corresponds roughly to a reusable unit such as a TR or preparation module.
+The GE interpreter needs this information to construct the sequence.
+
+To clarify this concept, we define the following:
+* **base block:** A Pulseq block with normalized waveform amplitudes. The base blocks are the fundamental building blocks, or 'atoms', of the sequence.
+* **virtual segment:** A sequence of base blocks in a particular order (with normalized amplitudes). 
+You can think of this as an abstract segment.
+* **segment instance:** a segment realization/occurrence within the pulse sequence, with specified waveform amplitudes and phase/frequency offsets.
+A pulse sequence typically contains multiple instances of any given virtual segment:
+
+![Segment illustration](../images/segments.png)
+
+In practice, this means that you must **mark the beginning of each segment instance in the sequence using the `seq.addTRID()` function** in the Pulseq toolbox.
+
 
 ## Defining Segments
 
