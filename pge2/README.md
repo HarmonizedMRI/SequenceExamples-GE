@@ -185,6 +185,8 @@ That site also contains instructions for simulating the `.pge` sequence and exec
 
 ## Creating the Pulseq file
 
+For an exhaustive list of requirements details and examples, see [doc/pge2-sequence-design-rules.md](doc/pge2-sequence-design-rules.md)
+
 The key points to keep in mind when creating a `.seq` file for the pge2 interpreter are summarized here.
 
 ### Define segments (block groups) by adding TRID labels
@@ -206,9 +208,8 @@ A pulse sequence typically contains multiple instances of any given virtual segm
 In practice, this means that you must **mark the beginning of each segment instance in the sequence using the `seq.addTRID()` function** in the Pulseq toolbox.
 Example:
 ```matlab
-
 % Play an instance of the inversion virtual segment consisting of two blocks
-seq.addTRID('inversion');
+seq.addTRID('invert');
 seq.addBlock(rf_inv);
 seq.addBlock(mr.makeDelay(1));
 
@@ -226,7 +227,12 @@ end
 ```
 
 When assigning TRID labels, **keep the following in mind**:
-1. Gradient waveforms must ramp to zero at the beginning and end of a segment.
+- Gradient waveforms must ramp to zero at the beginning and end of a segment.
+- The interpreter inserts a 117 us gap after each segment instance.
+- Each **virtual** segment takes up waveform memory in hardware, so it is generally good practice 
+to divide your sequence into as few virtual segments as possible, each being as short as possible.
+- Even empty blocks containing nothing but one or more labels are -- from a segment definition standpoint --
+  just as important as 'real' blocks of non-zero duration.
 
 Dynamic sequence changes that **do not** require the creation of an additional (unique) TRID label:
 * gradient/RF amplitude scaling
@@ -238,15 +244,6 @@ Dynamic sequence changes that **do** require a separate segment (TRID) to be ass
 * waveform shape or duration
 * block execution order within a segment
 * duration of any of the blocks within a segment, unless it is a pure delay block
-
-Other things to note:
-* The interpreter inserts a 117 us dead time (gap) at the end of each segment instance.
-Please account for this when creating your `.seq` file.
-(Actually, this gap is adjustable on the scanner -- it is equal to 17us plus the ssi time.)
-* Each **virtual** segment takes up waveform memory in hardware, so it is generally good practice 
-to divide your sequence into as few virtual segments as possible, each being as short as possible.
-* Even empty blocks containing nothing but one or more labels are -- from a segment definition standpoint --
-  just as important as 'real' blocks of non-zero duration.
   
 
 ### Set system hardware parameters
