@@ -16,16 +16,15 @@ such as a TR or a magnetization preparation section.
 A segment corresponds roughly to a reusable unit such as a TR or preparation module.
 The GE interpreter needs this information to construct the sequence.
 
-To clarify this concept, we define the following:
-* **base block:** A Pulseq block with normalized waveform amplitudes. The base blocks are the fundamental building blocks, or 'atoms', of the sequence.
-* **virtual segment:** A sequence of base blocks in a particular order (with normalized amplitudes). 
-You can think of this as an abstract segment.
-* **segment instance:** a segment realization/occurrence within the pulse sequence, with specified waveform amplitudes and phase/frequency offsets.
-A pulse sequence typically contains multiple instances of any given virtual segment:
+### Visual Guide: From Blocks to Scan Loop
+
+The pge2 interpreter uses a hierarchical approach to build a sequence:
+
+- **Base Blocks (The Atoms):** These are individual Pulseq blocks with normalized waveform amplitudes.
+- **Virtual Segments (The Templates):** These are abstract sequences of base blocks ordered to form a functional unit, such as a specific TR or preparation module. As shown in the image, `seqcore_id1` combines an excitation, phase encoding, acquisition, and spoiler into one template.
+- **Scan Loop (The Instances):** This is the physical execution on the scanner. Each segment instance follows the structural template of its Virtual Segment but applies specific parameters like RF phase or gradient amplitude (e.g., `gy.amp = 0.7`).
 
 ![Segment illustration](../images/segments.png)
-
-In practice, this means that you must **mark the beginning of each segment instance in the sequence using the `seq.addTRID()` function** in the Pulseq toolbox.
 
 
 ## Defining Segments
@@ -63,9 +62,10 @@ as long as the delay block itself is present in the same block position in every
 This is the recommended way to implement variable timing (e.g., TE / TR adjustments) without changing segment structure.
 
 **Important hardware caveat:**
-on GE systems, changing the duration of a delay-only block requires inserting a hardware WAIT pulse (EPIC SSP packet).
+On GE systems, changing the duration of a delay-only block requires inserting a hardware WAIT pulse (EPIC SSP packet).
 SSP packets are also used to control RF and ADC events. 
 Therefore, the start of a variable-duration delay block must not overlap with RF / ADC dead-time or ringdown intervals from neighboring events.
+For example, if a delay is used for TE stepping, it should be placed between the end of the RF ringdown and the start of the readout gradient to avoid hardware conflicts.
 
 In practice, variable delay blocks should only be used in timing regions that are already free of RF / ADC activity and their associated hardware guard intervals.
 
@@ -102,6 +102,8 @@ Therefore, it is **strongly recommended** to:
 - define base RF / gradient events once outside the loop,
 - reuse them directly when possible,
 - use `mr.scaleGrad()` (and related utilities) to vary amplitudes as needed.
+
+Using `mr.scaleGrad` not only ensures consistency but also significantly reduces the size of the .pge file by maximizing waveform reuse.
 
 Recommended pattern:
 ```matlab

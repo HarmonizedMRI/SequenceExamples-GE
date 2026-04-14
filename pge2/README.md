@@ -112,6 +112,7 @@ params = pge2.check(psq, sys_ge, 'PNSwt', PNSwt);
 ### 5. Save PulSeg object (optional)
 
 ```matlab
+pislquant = 64;  % number of ADC events used to set receive gain in Auto Prescan
 save(seq_name, 'psq', 'params', 'pislquant');
 ```
 
@@ -252,6 +253,10 @@ seq.gradSpectrum(...)
 ```
 
 See [2DGRE/main.m](2DGRE/main.m) for an example.
+
+> [!NOTE]
+> pge2.check does not automatically read these .dat files from the scanner; the user must manually input those frequencies into their Pulseq script using seq.gradSpectrum. 
+
 
 
 
