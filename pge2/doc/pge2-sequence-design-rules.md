@@ -72,7 +72,7 @@ This can:
 - increase waveform memory usage,
 - cause segment detection / playback issues.
 
-Therefore, it is strongly recommended to:
+Therefore, it is **strongly recommended** to:
 
 - define base RF / gradient events once outside the loop,
 - reuse them directly when possible,
@@ -83,14 +83,14 @@ Recommended pattern:
 gx_base = mr.makeTrapezoid('x', ...);
 
 for iy = 1:n_y
-    seq.addTRID('acquire');
     gx = mr.scaleGrad(gx_base, pe_scale(iy));
+    seq.addTRID('acquire');
     seq.addBlock(rf, gz);
     seq.addBlock(gx, adc);
 end
 ```
 
-Discouraged pattern
+Discouraged pattern:
 ```matlab
 for iy = 1:n_y
     gx = mr.makeTrapezoid('x', 'Area', area_vec(iy), ...); % risky
@@ -137,13 +137,11 @@ n_dummy = 10;
 for iy = 1:n_dummy+n_y;
    if iy <= n_dummy
        seq.addTRID('dummy_shot');
-   else
-       seq.addTRID('acquire');
-   end
-   seq.addBlock(rf, gz);       % block A
-   if iy <= n_dummy
+       seq.addBlock(rf, gz);   % block A
        seq.addBlock(gx);       % block B
    else
+       seq.addTRID('acquire');
+       seq.addBlock(rf, gz);   % block A
        seq.addBlock(gx, adc);  % block C
    end
    seq.addBlock(gz_spoil);     % block D
@@ -192,7 +190,7 @@ It is therefore generally best to make the abstract segments consist of as few b
 However, while shorter segments are preferred, avoid creating an excessive number of unique segment types, 
 since each abstract segment also consumes sequencer resources.
 Segmenting the sequence into an excessively large number of unique abstract segments 
-also risks making the code 
+also risks making the code less readable.
 
 #### Example
 
@@ -244,6 +242,7 @@ However, this has several drawbacks:
    This restricts the kind of waveforms that this approach can support. 
  - Breaks the link between segments and logically distinct sub-sequences
  - Causes code bloat and makes the code harder to read
+ - Increases the number of segment ringdown time gaps (117 us) in the sequence
 
 The **recommended implementation** for this example is:
 
@@ -267,13 +266,13 @@ This has about the same hardware memory requirements as the previous approach,
 but is consistent with the notion of a 'sequence TR'.
 
 
-
 ## Setting system (scanner) parameters
 
 ### Raster times
 
-The waveforms in the `.seq` file are placed directly onto the hardware,
+The waveforms in the `.seq` file are placed directly onto the hardware (no interpolation is performed),
 and must therefore adhere to the scanner raster time requirements.
+For GE scanners, this means:
 
 - `sys.gradRasterTime` must be an integer multiple of 4us
 - `sys.rfRasterTime` must be an integer multiple of 2us
@@ -282,7 +281,7 @@ and must therefore adhere to the scanner raster time requirements.
 
 ### RF/ADC dead- and ringdown-times
 
-Like on other vendors, there is some time required to turn on/off the RF amplifier and ADC card.
+Like other vendors, there is some time required to turn on/off the RF amplifier and ADC card.
 To our knowledge, on GE these are:
 
 ```
