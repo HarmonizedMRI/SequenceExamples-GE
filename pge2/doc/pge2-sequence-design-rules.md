@@ -12,7 +12,7 @@ Soft rules are intended to promote robust and memory-efficient sequence executio
 
 ## Defining Segments
 
-Segment boundaries are defined exclusively by TRID labels, that you assign as follows:
+Segment boundaries are defined exclusively by TRID labels, that are assigned as follows:
 
 ```matlab
 seq.addTRID(<text_label>);
@@ -20,29 +20,36 @@ seq.addTRID(<text_label>);
 
 where `<text_label>` is any unique text string.
 We suggest using separate TRIDs for logically distinct sub-sequences, such as:
-- `dummy_shots`
-- `calibration_scans`
-- `imaging_shots`
-- `navigator_segments`
+- `dummy_shot`
+- `calibration_scan`
+- `imaging_shot`
+- `navigator_segment`
 
 A segment consists of all blocks following a given TRID label, up to (but not including) the next TRID label.
 
 The first time a TRID is encountered, pge2 stores that segment as the **abstract definition**.
-Later uses of the same TRID do not redefine the segment — they only replay the stored definition with updated waveform/RF/ADC parameters.
+Later uses of the same TRID do not redefine the segment — they only replay the stored segment structure using the corresponding event parameters for that instance.
 
 
 ### Strict rule: The presence/absence of events must be the same for all segment instances
 
 The event *structure* must remain identical across all instances:
 
-* same number of blocks,
-* same event types present in each block (RF / trap / arbitrary gradient / ADC / trigger),
+- same number of blocks,
+- same event types present in each block (RF / trap / arbitrary gradient / ADC / trigger),
 
 However, waveform amplitudes, phases, and frequencies may vary as long as the block/event structure is unchanged.
 
 Note: the duration of delay-only blocks may vary between segment instances, 
 as long as the delay block itself is present in the same block position in every instance.
 This is the recommended way to implement variable timing (e.g., TE / TR adjustments) without changing segment structure.
+
+**Important hardware caveat:**
+on GE systems, changing the duration of a delay-only block requires inserting a hardware WAIT pulse (EPIC SSP packet).
+SSP packets are also used to control RF and ADC events. 
+Therefore, the start of a variable-duration delay block must not overlap with RF / ADC dead-time or ringdown intervals from neighboring events.
+
+In practice, variable delay blocks should only be used in timing regions that are already free of RF / ADC activity and their associated hardware guard intervals.
 
 #### Practical recommendation: define reusable base events outside the main loop
 
@@ -229,7 +236,7 @@ for iy = 1:n_y;
 end
 ```
 
-which produces 
+which produces the following abstract segments:
 
 ```
 Abstract segment 1: A
@@ -331,9 +338,8 @@ sys = mr.opts('maxGrad', 40, 'gradUnit','mT/m', ...
               'B0', 3.0);
 ```
 
-If the latter results in overlapping RF/ADC dead/ringdown times, you need adjust the timing accordingly
+If the latter results in overlapping RF/ADC dead/ringdown times, you need to adjust the timing accordingly
 (by, e.g., setting the dead/ringdown times to non-zero values, or setting delays and block durations explicitly, etc).
-
 
 
 ## Sequence timing 
@@ -350,8 +356,8 @@ When loading a segment, the interpreter inserts a 117 us dead time at the end of
 
 ### RF and ADC delays
 
-In the internal sequence representation used by the interpreter, RF and ADC events are delayed by about 100 us to account for gradient delays.
-Depending on the sequence details, you may need to extend the segment duration to account for this.
+The interpreter internally offsets RF / ADC timing relative to block boundaries to account for gradient delays.
+Depending on details of your sequence, you may need to extend the segment duration to account for this.
 
 
 ## Gradient rotation
@@ -365,11 +371,12 @@ In other words, the interpreter cannot rotate each block within a segment indepe
 If a segment contains multiple blocks with different rotation matrices, **only the last** of the non-identity rotations are applied. 
 If you find this to be the case, redesign the segment definitions to achieve the desired rotations.
 
+
 ## Additional recommendations
 
 - **Avoid setting waveform amplitudes to exactly zero -- instead, set to `eps` or a similarly small number.**
 This is recommended because the Pulseq toolbox may not recognize, e.g., a zero-amplitude trapezoid
-as exactly that, which is in conflict with the GE sequence model.
+as exactly that, which is in conflict with the GE sequence model. (This may be obsolete -- need to check. TODO)
 
 
 
