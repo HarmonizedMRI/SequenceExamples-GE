@@ -195,7 +195,7 @@ Key sequence design constraints:
 - Segment boundaries are defined by TRID labels.
 - The first instance of a TRID defines the segment structure.
 - All later instances must have the same block / event structure.
-- Use separate TRIDs for logically distinct scan states.
+- Use separate TRIDs for logically distinct sequence sections/elements.
 
 ### Reusable events
 
