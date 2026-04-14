@@ -1,13 +1,13 @@
-# Pulseq on GE v2 (pge2) examples 
+# Pulseq on GE v2 (pge2) 
 
 **Table of Contents**  
 [Overview](#overview)  
 [Workflow](#workflow)  
 [Obtaining the software](#obtaining-the-software)  
-[Creating the .seq file](#creating-the-pulseq-file)  
+[Sequence design guidelines](#sequence-design-guidelines)  
 [Safety management](#safety-management)  
 
-**(Updated Mar 2026)**
+**(Updated Apr 2026)**
 
 
 ## Overview
@@ -15,7 +15,7 @@
 This repository contains examples of how to prepare and run
 Pulseq sequences on GE scanners using the **Pulseq on GE v2 (pge2)** interpreter.
 
-The workflow is based on a **vendor-neutral intermediate representation**, called **PulSeg**, which is derived from the Pulseq `.seq` file and organizes the sequence into reusable segments.
+The workflow is based on a vendor-neutral intermediate representation called **PulSeg**, which converts the Pulseq .seq file into reusable hardware-efficient sequence segments.
 
 The pge2 interpreter directly translates the events specified in the PulSeg representation to the hardware, enabling flexible and efficient sequence execution.  
 Because of this low-level control, care must be taken to ensure that timing, rasterization, and hardware constraints are respected.
@@ -45,7 +45,7 @@ C --> D
 D --> E
 ```
 
-The workflow is summarized below.
+The typical workflow is summarized below.
 See also [main.m](./2DGRE/main.m) in the [2D GRE demo](./2DGRE/) folder.
 
 
@@ -67,7 +67,8 @@ sys_ge = pge2.opts(...);
 params = pge2.check(psq, sys_ge);
 
 % Validate (strongly recommended before simulation or scanning)
-seq = mr.Sequence(sys); seq.read([seq_name '.seq']);
+seq = mr.Sequence(); 
+seq.read([seq_name '.seq']);
 pge2.validate(psq, sys_ge, seq, ...);
 
 % Serialize
@@ -151,8 +152,7 @@ To use the pge2 workflow, you will need:
 
 ### 1. PulSeg tools (Pulseq → PulSeg conversion)
 
-Available at:
-https://github.com/HarmonizedMRI/PulSeg
+Available at: [HarmonizedMRI/PulSeg](https://github.com/HarmonizedMRI/PulSeg)
 
 This repository provides:
 
@@ -161,8 +161,7 @@ This repository provides:
 
 ### 2. pge2 MATLAB toolbox
 
-Available at:
-https://github.com/HarmonizedMRI/pge2
+Available at: [HarmonizedMRI/pge2](https://github.com/HarmonizedMRI/pge2)
 
 This toolbox provides:
 
@@ -175,16 +174,17 @@ This toolbox provides:
 
 ### 3. GE interpreter (EPIC)
 
-Available at:
-https://github.com/GEHC-External/pulseq-ge-interpreter
+Available at: [GEHC-External/pulseq-ge-interpreter](https://github.com/GEHC-External/pulseq-ge-interpreter)
+
 
 (Contact GE for access)
 
 That site also contains instructions for simulating the `.pge` sequence and executing it on the scanner.
 
 
-## Creating the Pulseq file
+## Sequence design guidelines
 
+Because pge2 directly maps Pulseq events to GE hardware, Pulseq files must satisfy several structural and timing constraints.
 For full sequence design rules, examples, and hardware caveats, see: [docs/pge2-sequence-design-rules.md](docs/pge2-sequence-design-rules.md)
 
 Key sequence design constraints:
@@ -270,5 +270,8 @@ This limit arises from internal memory constraints and has been determined empir
 It is the user's responsibility to ensure compliance beyond the evaluated window.
 
 
+## Troubleshooting
+
+For common pitfalls (segment mismatches, timing issues, missing signal), see the detailed sequence design rules.
 
 
