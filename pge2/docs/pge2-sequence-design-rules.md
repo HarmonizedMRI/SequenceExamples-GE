@@ -189,8 +189,8 @@ Note that in this example, we have for simplicity and clarity left out the y pha
 
 #### Example
 
-A common Pulseq pattern is inserting delays conditionally.
-However, conditional insertion/removal of delay-only blocks also changes segment structure and is not allowed within a segment.
+A common Pulseq pattern is inserting delays (or other blocks) conditionally.
+However, conditional insertion/removal of blocks also changes segment structure and is not allowed within a segment.
 
 ```matlab
 if delay_vec(iy) > 0
