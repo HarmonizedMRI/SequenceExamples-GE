@@ -10,9 +10,9 @@ pislquant = 10;     % number of shots/ADC events used for receive gain calibrati
 write2DGRE;
 
 %---------------------------------------------------------------
-% Convert .seq file to a PulSeg sequence (psq) object
+% Convert .seq file to a PulSeg sequence (psg) object
 %---------------------------------------------------------------
-psq = pulseg.fromSeq([seq_name '.seq']);   % ,'usesRotationEvents', false);
+psg = pulseg.fromSeq([seq_name '.seq']);   % ,'usesRotationEvents', false);
 
 %---------------------------------------------------------------
 % Define hardware parameters for your scanner
@@ -32,37 +32,37 @@ sys_ge = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, coil);
 % interpreter at scan time.)
 %---------------------------------------------------------------
 PNSwt = [1 1 1];   % directional PNS weights, see pge2.pns()
-params = pge2.check(psq, sys_ge, 'PNSwt', PNSwt);
+params = pge2.check(psg, sys_ge, 'PNSwt', PNSwt);
 
 %------------------------------------------------------------------------------
-% Save psq object as .mat file for Matlab runtime based scanner workflow.
+% Save psg object as .mat file for Matlab runtime based scanner workflow.
 % See https://github.com/HarmonizedMRI/pge2/tree/main/scanner/fov_prescription
 %------------------------------------------------------------------------------
-save(seq_name, 'psq', 'params', 'pislquant');  % TODO: get sys_ge from scanner config files
+save(seq_name, 'psg', 'params', 'pislquant');  % TODO: get sys_ge from scanner config files
 
 %---------------------------------------------------------------
-% Plot the psq sequence
+% Plot the psg sequence
 %---------------------------------------------------------------
-S = pge2.plot(psq, sys_ge, 'blockRange', [1 2], ...
+S = pge2.plot(psg, sys_ge, 'blockRange', [1 2], ...
     'PNSwt', PNSwt, ...
     'rotate', false, ...
     'interpolate', false);
-%S = pge2.plot(psq, sys_ge, 'timeRange',  [0 0.02], 'rotate', true);
+%S = pge2.plot(psg, sys_ge, 'timeRange',  [0 0.02], 'rotate', true);
 
 %---------------------------------------------------------------
-% Validate psq representation against the original .seq file
+% Validate psg representation against the original .seq file
 %---------------------------------------------------------------
 seq = mr.Sequence();
 seq.read([seq_name '.seq']);
 
 % Cycle through all segment instances and stop on first mismatch
-pge2.validate(psq, sys_ge, seq, [], 'row', [], 'plot', false);
+pge2.validate(psg, sys_ge, seq, [], 'row', [], 'plot', false);
 
 % Plot each segment instance before proceeding
-%pge2.validate(psq, sys_ge, seq, [], 'row', [], 'plot', true);
+%pge2.validate(psg, sys_ge, seq, [], 'row', [], 'plot', true);
 
 % Check only segments beginning at/after block 1000
-%pge2.validate(psq, sys_ge, seq, [], 'row', 1000, 'plot', true);
+%pge2.validate(psg, sys_ge, seq, [], 'row', 1000, 'plot', true);
 
 %---------------------------------------------------------------
 % Apply slice offset and write PulSeg object to .pge file.
@@ -72,15 +72,15 @@ pge2.validate(psq, sys_ge, seq, [], 'row', [], 'plot', false);
 xloc = 0;
 yloc = 0;
 zloc = 0;   % m
-psq = pge2.translateFOVrf(psq, [xloc yloc zloc]);
-pge2.serialize(psq, [seq_name '.pge'], 'pislquant', 10, 'params', params, 'checkHash', false);
+psg = pge2.translateFOVrf(psg, [xloc yloc zloc]);
+pge2.serialize(psg, [seq_name '.pge'], 'pislquant', 10, 'params', params, 'checkHash', false);
 
 %---------------------------------------------------------------
 % Validate the GE simulator XML output (created by WTools/Pulse View)
 % against the original .seq file.  For MR30.2 and later.
 %---------------------------------------------------------------
 %xml_path = '~/transfer/xml/';   % directory for Pulse View .xml files
-%pge2.validate(psq, sys_ge, seq, xml_path, 'row', [], 'plot', true);
+%pge2.validate(psg, sys_ge, seq, xml_path, 'row', [], 'plot', true);
 
 % Check mechanical resonances (forbidden frequency bands).
 % Forbidden EPI spacings are listed in /srv/nfs/psd/etc/epiesp*.dat

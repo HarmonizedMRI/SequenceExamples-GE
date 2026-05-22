@@ -58,21 +58,21 @@ write2DGRE;
 seq_name = 'gre2d';
 
 % Convert to PulSeg
-psq = pulseg.fromSeq([seq_name '.seq']);
+psg = pulseg.fromSeq([seq_name '.seq']);
 
 % Define system
 sys_ge = pge2.opts(...);
 
 % Check
-params = pge2.check(psq, sys_ge);
+params = pge2.check(psg, sys_ge);
 
 % Validate (strongly recommended before simulation or scanning)
 seq = mr.Sequence(); 
 seq.read([seq_name '.seq']);
-pge2.validate(psq, sys_ge, seq, ...);
+pge2.validate(psg, sys_ge, seq, ...);
 
 % Serialize
-pge2.serialize(psq, [seq_name '.pge'], ...);
+pge2.serialize(psg, [seq_name '.pge'], ...);
 ```
 
 ### 1. Create the Pulseq file (`.seq`)
@@ -88,7 +88,7 @@ write2DGRE;
 ### 2. Convert to PulSeg representation
 
 ```matlab
-psq = pulseg.fromSeq([seq_name '.seq']);
+psg = pulseg.fromSeq([seq_name '.seq']);
 ```
 
 ---
@@ -104,7 +104,7 @@ sys_ge = pge2.opts(psd_rf_wait, psd_grd_wait, b1_max, g_max, slew_max, coil);
 ### 4. Check sequence constraints
 
 ```matlab
-params = pge2.check(psq, sys_ge, 'PNSwt', PNSwt);
+params = pge2.check(psg, sys_ge, 'PNSwt', PNSwt);
 ```
 
 ---
@@ -113,7 +113,7 @@ params = pge2.check(psq, sys_ge, 'PNSwt', PNSwt);
 
 ```matlab
 pislquant = 64;  % number of ADC events used to set receive gain in Auto Prescan
-save(seq_name, 'psq', 'params', 'pislquant');
+save(seq_name, 'psg', 'params', 'pislquant');
 ```
 
 This `.mat` file can be used in the scanner-side FOV prescription workflow
@@ -124,7 +124,7 @@ described [here](https://github.com/HarmonizedMRI/pge2/tree/main/scanner/fov_pre
 ### 6. Visualize the sequence
 
 ```matlab
-S = pge2.plot(psq, sys_ge);
+S = pge2.plot(psg, sys_ge);
 ```
 
 ---
@@ -135,7 +135,7 @@ S = pge2.plot(psq, sys_ge);
 seq = mr.Sequence();
 seq.read([seq_name '.seq']);
 
-pge2.validate(psq, sys_ge, seq, ...);
+pge2.validate(psg, sys_ge, seq, ...);
 ```
 
 ---
@@ -143,7 +143,7 @@ pge2.validate(psq, sys_ge, seq, ...);
 ### 8. Serialize to `.pge`
 
 ```matlab
-pge2.serialize(psq, [seq_name '.pge'], ...);
+pge2.serialize(psg, [seq_name '.pge'], ...);
 ```
 
 
