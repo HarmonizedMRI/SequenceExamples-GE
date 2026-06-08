@@ -2,9 +2,10 @@
 system('git clone --branch master git@github.com:pulseq/pulseq.git');
 addpath pulseq/matlab
 
-% get toolbox to convert .seq file to a PulSeg sequence (psg) object
-system('git clone git@github.com:HarmonizedMRI/pulseg.git');
-addpath pulseg/matlab
+% get toolbox to convert .seq file to a PulSeg sequence (pulseg_ir) object
+system('git clone --branch dev git@github.com:HarmonizedMRI/pulseg.git');
+%addpath pulseg/matlab
+addpath ~/github/HarmonizedMRI/pulseg/matlab
 addpath(genpath('pulseg/matlab/third_party'));
 
 % get toolbox for plotting psg object and exporting to binary file for GE 
