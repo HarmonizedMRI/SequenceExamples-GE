@@ -1,0 +1,48 @@
+{
+  "pulseg_import": {
+    "soft_delay_input_ms": 700
+  },
+
+  "translateFOV": {
+    "Rxfile": "Rx.txt"
+  },
+
+  "pge_opts": {
+    "psd_rf_wait": 100e-6,
+    "psd_grd_wait": 100e-6,
+    "b1_max": 0.2,
+    "g_max": 5,
+    "slew_max": 20,
+    "coil": "xrm",
+
+    "options": {
+      "GRAD_UPDATE_TIME": 4e-6,
+      "RF_UPDATE_TIME": 2e-6,
+      "adc_raster_time": 2e-6,
+      "adc_dead_time": 4e-5,
+      "adc_ringdown_time": 0,
+      "rf_dead_time": 7.2e-5,
+      "rf_ringdown_time": 5.6e-5,
+      "segment_dead_time": 1.2e-5,
+      "segment_ringdown_time": 1.05e-4,
+      "gamma": 4257.6
+    }
+  },
+
+  "pge_import": {
+    "grad_raster_time": 4e-6
+  },
+
+  "pge_check": {
+    "pns_weights": [1, 1, 1]
+  },
+
+  "pge_serialize": {
+    "pislquant": 10,
+    "checkHash": true
+  },
+
+  "pge_writeentryfile": {
+    "path": "/srv/nfs/psd/usr/psd/pulseq/v7/sequences/"
+  }
+}
