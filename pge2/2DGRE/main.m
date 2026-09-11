@@ -7,6 +7,21 @@ pislquant = 10;     % number of shots/ADC events used for receive gain calibrati
 % Write the .seq file
 write2DGRE;
 
+%% Compile .pge file.
+% To compile for WTools simulator, set `checkHash` to false in compilePGE.json
+
+% load configuration
+opts = loadOptionsJSON('compilePGE.json');
+
+% Disable prescription-dependent FOV translation if Rx.txt is unavailable
+opts = rmfield(opts, 'translateFOV');
+opuser1 = 48;
+compilePGE('gre2d.seq', opuser1, 'gre2d.pge', opts);
+
+return
+
+%
+
 % Convert .seq file to a PulSeg intermediate represention 
 pulseg_ir = pulseg.import([seq_name '.seq']);   % ,'usesRotationEvents', false);
 

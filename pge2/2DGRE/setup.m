@@ -10,7 +10,8 @@ addpath(genpath('pulseg/matlab/third_party'));
 
 % get toolbox for plotting psg object and exporting to binary file for GE 
 system('git clone --branch dev git@github.com:HarmonizedMRI/pge2.git');
-addpath pge2/matlab
+addpath pge2/matlab   % +pge2 tools
+addpath pge2/matlab/scanner/compile  % compilePGE.m
 
 % To load the ScanArchive raw data files you will need the Orchestra toolbox
 % which is available for download at http://weconnect.gehealthcare.com/ 
