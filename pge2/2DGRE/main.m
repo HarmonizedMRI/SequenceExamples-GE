@@ -33,6 +33,10 @@ params = pge2.check(pge, sys_ge, 'PNSwt', PNSwt);
 % See https://github.com/HarmonizedMRI/pge2/tree/main/scanner/fov_prescription
 %------------------------------------------------------------------------------
 save(seq_name, 'pulseg_ir', 'params', 'pislquant');  % TODO: get sys_ge from scanner config files
+
+% Save to binary file for execution on GE
+pge2.serialize(pge, [seq_name '.pge'], 'pislquant', pislquant, 'params', params, 'checkHash', false);
+
 return
 
 %---------------------------------------------------------------
