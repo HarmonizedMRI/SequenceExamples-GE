@@ -16,7 +16,7 @@ opts = loadOptionsJSON('compilePGE.json');
 % Disable prescription-dependent FOV translation if Rx.txt is unavailable
 opts = rmfield(opts, 'translateFOV');
 opuser1 = 48;
-compilePGE('gre2d.seq', opuser1, 'gre2d.pge', opts);
+compilePGE('gre2d.seq', opuser1, pislquant, 'gre2d.pge', opts);
 
 return
 

@@ -1,20 +1,14 @@
 {
-  "pulseg_import": {
-    "soft_delay_input_ms": 700
-  },
-
   "translateFOV": {
     "Rxfile": "Rx.txt"
   },
-
   "pge_opts": {
     "psd_rf_wait": 100e-6,
     "psd_grd_wait": 100e-6,
-    "b1_max": 0.2,
+    "b1_max": 0.25,
     "g_max": 5,
     "slew_max": 20,
     "coil": "xrm",
-
     "options": {
       "GRAD_UPDATE_TIME": 4e-6,
       "RF_UPDATE_TIME": 2e-6,
@@ -28,20 +22,15 @@
       "gamma": 4257.6
     }
   },
-
   "pge_import": {
     "grad_raster_time": 4e-6
   },
-
   "pge_check": {
     "pns_weights": [1, 1, 1]
   },
-
   "pge_serialize": {
-    "pislquant": 10,
     "checkHash": true
   },
-
   "pge_writeentryfile": {
     "path": "/srv/nfs/psd/usr/psd/pulseq/v7/sequences/"
   }
